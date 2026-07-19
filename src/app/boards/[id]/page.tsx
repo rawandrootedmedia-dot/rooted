@@ -23,6 +23,39 @@ type Template = {
   icon: string;
 };
 
+function SignedImg({ s3Key, alt, className }: { s3Key: string; alt: string; className?: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/files/signed?key=${encodeURIComponent(s3Key)}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.url) setUrl(d.url); })
+      .catch(() => {});
+  }, [s3Key]);
+
+  if (!url) {
+    return (
+      <div className={`w-full h-full flex items-center justify-center bg-bone-100 dark:bg-charcoal-800 ${className || ""}`}>
+        <div className="w-6 h-6 rounded-full border-2 border-clay-300 border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  return <img src={url} alt={alt} className={className || "w-full h-full object-cover"} />;
+}
+
+function getVideoEmbedUrl(url: string): string | null {
+  const youtubeMatch = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]+)/
+  );
+  if (youtubeMatch) return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
+
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+
+  return null;
+}
+
 const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
   document: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>,
   image: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" /></svg>,
@@ -53,9 +86,33 @@ function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: stri
         return (
           <div className="w-full h-full rounded-xl overflow-hidden bg-bone-100 dark:bg-charcoal-800">
             {card.content?.url ? (
-              <img src={card.content.url} alt={card.content.name || ""} className="w-full h-full object-cover" />
+              <SignedImg s3Key={card.content.url} alt={card.content.name || "Uploaded image"} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-charcoal-400 text-xs">No image</div>
+            )}
+          </div>
+        );
+      case "video":
+        return (
+          <div className="w-full h-full rounded-xl overflow-hidden bg-black">
+            {card.content?.embedUrl ? (
+              <iframe
+                src={card.content.embedUrl}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                loading="lazy"
+              />
+            ) : card.content?.url ? (
+              <video
+                src={card.content.url}
+                className="w-full h-full object-contain"
+                controls
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-charcoal-400 text-xs">No video</div>
             )}
           </div>
         );
@@ -100,8 +157,8 @@ function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: stri
         );
       case "link":
         return (
-          <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 flex flex-col justify-center">
-            <p className="text-xs text-charcoal-400 mb-1">Link</p>
+          <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 flex flex-col justify-center overflow-hidden">
+            <p className="text-xs text-charcoal-400 mb-1 truncate">Link</p>
             <a href={card.content?.url || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-sage-600 dark:text-sage-400 hover:underline truncate">
               {card.content?.label || card.content?.url || "Add a URL"}
             </a>
@@ -201,6 +258,8 @@ export default function BoardPage() {
   const [loading, setLoading] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoMenuOpen, setVideoMenuOpen] = useState(false);
   const [colorValue, setColorValue] = useState("#e8dfd3");
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -244,13 +303,13 @@ export default function BoardPage() {
 
   async function addCard(type: string, content: any) {
     const offset = 20;
+    const w = type === "image" ? 320 : type === "video" ? 400 : type === "color" ? 200 : 260;
+    const h = type === "image" ? 320 : type === "video" ? 260 : type === "color" ? 200 : type === "heading" ? 80 : 200;
     const newCard = {
-      type,
-      content,
+      type, content,
       x: 40 + cards.length * offset,
       y: 40 + cards.length * offset,
-      width: type === "image" ? 320 : type === "color" ? 200 : 260,
-      height: type === "image" ? 320 : type === "color" ? 200 : type === "heading" ? 80 : 200,
+      width: w, height: h,
       boardId: id,
     };
 
@@ -265,6 +324,7 @@ export default function BoardPage() {
       setCards((prev) => [...prev, data.card]);
     }
     setAddMenuOpen(false);
+    setVideoMenuOpen(false);
   }
 
   async function deleteCard(cardId: string) {
@@ -272,7 +332,7 @@ export default function BoardPage() {
     setCards((prev) => prev.filter((c) => c.id !== cardId));
   }
 
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, cardType: string) {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -282,11 +342,18 @@ export default function BoardPage() {
     const res = await fetch("/api/upload", { method: "POST", body: formData });
     if (res.ok) {
       const data = await res.json();
-      addCard("image", { url: data.url, name: data.name });
+      addCard(cardType, { url: data.key, name: data.name });
     }
   }
 
-  function handleTemplateApplied(templateId: string) {
+  function handleVideoEmbed() {
+    const trimmed = videoUrl.trim();
+    if (!trimmed) return;
+    const embedUrl = getVideoEmbedUrl(trimmed);
+    addCard("video", { url: trimmed, embedUrl, label: trimmed });
+  }
+
+  function handleTemplateApplied() {
     setShowTemplates(false);
     fetch(`/api/boards/${id}`)
       .then((r) => r.json())
@@ -301,11 +368,7 @@ export default function BoardPage() {
   return (
     <div className="h-screen flex flex-col">
       {showTemplates && (
-        <TemplatePicker
-          boardId={id as string}
-          onSelect={handleTemplateApplied}
-          onClose={() => setShowTemplates(false)}
-        />
+        <TemplatePicker boardId={id as string} onSelect={handleTemplateApplied} onClose={() => setShowTemplates(false)} />
       )}
 
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-sage-200 dark:border-charcoal-700 bg-white/80 dark:bg-charcoal-950/80 backdrop-blur-sm flex-shrink-0">
@@ -330,7 +393,7 @@ export default function BoardPage() {
 
           <div className="relative">
             <button
-              onClick={() => setAddMenuOpen(!addMenuOpen)}
+              onClick={() => { setAddMenuOpen(!addMenuOpen); setVideoMenuOpen(false); }}
               className="px-4 py-1.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition flex items-center gap-1.5"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
@@ -338,15 +401,45 @@ export default function BoardPage() {
             </button>
 
             {addMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-charcoal-900 rounded-xl border border-sage-200 dark:border-charcoal-700 shadow-xl z-50 p-3 space-y-2">
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-charcoal-900 rounded-xl border border-sage-200 dark:border-charcoal-700 shadow-xl z-50 p-3 space-y-1">
+                <p className="text-[10px] font-semibold text-charcoal-400 uppercase tracking-wider px-2 pt-1 pb-1">Media</p>
                 <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 cursor-pointer transition">
                   <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                   </div>
                   <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Image</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "image")} />
                 </label>
 
+                <button onClick={() => { setVideoMenuOpen(!videoMenuOpen); }} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
+                  <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 16.5a12.015 12.015 0 00-7.5 0m11.25-1.5a12.015 12.015 0 00-7.5-2.25m-7.5 9.75h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003.75 6v12a1.5 1.5 0 001.5 1.5z" /></svg>
+                  </div>
+                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Video</span>
+                </button>
+
+                {videoMenuOpen && (
+                  <div className="pl-11 pr-2 pb-2 space-y-2">
+                    <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 cursor-pointer transition text-sm text-charcoal-600 dark:text-charcoal-400">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                      Upload file
+                      <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileUpload(e, "video")} />
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        value={videoUrl}
+                        onChange={(e) => setVideoUrl(e.target.value)}
+                        placeholder="YouTube or Vimeo URL"
+                        className="flex-1 px-2 py-1.5 text-xs rounded-lg border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400"
+                        onKeyDown={(e) => e.key === "Enter" && handleVideoEmbed()}
+                      />
+                      <button onClick={handleVideoEmbed} className="px-2 py-1 rounded-lg bg-sage-600 hover:bg-sage-700 text-white text-xs font-medium transition">Embed</button>
+                    </div>
+                  </div>
+                )}
+
+                <div className="border-t border-sage-200 dark:border-charcoal-700 my-1" />
+                <p className="text-[10px] font-semibold text-charcoal-400 uppercase tracking-wider px-2 pt-1 pb-1">Content</p>
                 <button onClick={() => addCard("note", { text: "" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
                   <div className="w-8 h-8 rounded-lg bg-bone-200 dark:bg-charcoal-800 flex items-center justify-center text-clay-600">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -397,25 +490,15 @@ export default function BoardPage() {
             <h2 className="font-serif text-2xl text-clay-800 dark:text-clay-200 mb-2">This board is empty</h2>
             <p className="text-charcoal-500 dark:text-charcoal-400 text-sm mb-8 max-w-sm">Start with a template or add cards one at a time.</p>
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowTemplates(true)}
-                className="px-5 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white font-medium transition"
-              >
-                Browse Templates
-              </button>
-              <button
-                onClick={() => setAddMenuOpen(true)}
-                className="px-5 py-2.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-700 dark:text-charcoal-300 font-medium hover:bg-sage-50 dark:hover:bg-charcoal-800 transition"
-              >
-                Add Card
-              </button>
+              <button onClick={() => setShowTemplates(true)} className="px-5 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white font-medium transition">Browse Templates</button>
+              <button onClick={() => setAddMenuOpen(true)} className="px-5 py-2.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-700 dark:text-charcoal-300 font-medium hover:bg-sage-50 dark:hover:bg-charcoal-800 transition">Add Card</button>
             </div>
           </div>
         ) : (
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <div
               className="board-canvas relative min-w-[200%] min-h-[200%] w-[4000px] h-[4000px]"
-              onClick={() => setAddMenuOpen(false)}
+              onClick={() => { setAddMenuOpen(false); setVideoMenuOpen(false); }}
             >
               {cards.map((card) => (
                 <DraggableCard key={card.id} card={card} onDelete={deleteCard} />

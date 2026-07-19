@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
-type BoardItem = { id: string; title: string; _count: { cards: number } };
+type BoardItem = { id: string; title: string; deletedAt: string | null; _count: { cards: number } };
 
 type ProjectData = {
   id: string;
@@ -15,6 +15,7 @@ type ProjectData = {
   brief: string | null;
   client: { id: string; name: string };
   boards: BoardItem[];
+  trashedBoards: BoardItem[];
   shots: { id: string; label: string; status: string; shotType: string | null; order: number }[];
   callSheets: { id: string; date: string; location: string | null }[];
 };
@@ -54,6 +55,20 @@ export default function ProjectDetail() {
       setProject((p) => p ? { ...p, boards: [...p.boards, data.board] } : p);
       setNewBoardTitle("");
     }
+  }
+
+  async function restoreBoard(boardId: string) {
+    await fetch(`/api/boards/${boardId}`, { method: "POST" });
+    setProject((p) => {
+      if (!p) return p;
+      const board = p.trashedBoards.find((b) => b.id === boardId);
+      if (!board) return p;
+      return {
+        ...p,
+        boards: [...p.boards, { ...board, deletedAt: null }],
+        trashedBoards: p.trashedBoards.filter((b) => b.id !== boardId),
+      };
+    });
   }
 
   async function addBoardWithTemplate(templateId: string) {
@@ -182,6 +197,32 @@ export default function ProjectDetail() {
           ))}
         </div>
       </div>
+
+      {project.trashedBoards?.length > 0 && (
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-4 h-4 text-charcoal-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            <h2 className="text-sm font-semibold text-charcoal-400 uppercase tracking-wider">Recently Deleted</h2>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {project.trashedBoards.map((board) => (
+              <div key={board.id} className="p-4 rounded-xl border border-red-200 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/10 flex items-center justify-between min-h-[80px]">
+                <div>
+                  <h3 className="font-serif text-base text-charcoal-500 dark:text-charcoal-400 line-through">{board.title}</h3>
+                  <p className="text-xs text-charcoal-400 mt-0.5">{board._count.cards} card{board._count.cards !== 1 ? "s" : ""}</p>
+                </div>
+                <button
+                  onClick={() => restoreBoard(board.id)}
+                  className="px-3 py-1.5 rounded-lg bg-white dark:bg-charcoal-800 border border-sage-300 dark:border-charcoal-600 text-sm text-sage-700 dark:text-sage-400 hover:bg-sage-50 dark:hover:bg-charcoal-700 transition flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Restore
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

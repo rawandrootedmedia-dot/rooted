@@ -11,7 +11,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     where: { id, userId: session.id },
     include: {
       client: { select: { id: true, name: true } },
-      boards: { include: { _count: { select: { cards: true } } }, orderBy: { createdAt: "asc" } },
       shots: { orderBy: { order: "asc" } },
       callSheets: { orderBy: { date: "asc" } },
     },
@@ -19,7 +18,20 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
   if (!project) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  return NextResponse.json({ project });
+  const [boards, trashedBoards] = await Promise.all([
+    prisma.board.findMany({
+      where: { projectId: project.id, deletedAt: null },
+      include: { _count: { select: { cards: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.board.findMany({
+      where: { projectId: project.id, deletedAt: { not: null } },
+      include: { _count: { select: { cards: true } } },
+      orderBy: { deletedAt: "desc" },
+    }),
+  ]);
+
+  return NextResponse.json({ project: { ...project, boards, trashedBoards } });
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

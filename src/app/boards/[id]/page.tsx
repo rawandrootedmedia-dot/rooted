@@ -268,14 +268,20 @@ function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
   };
 
   return (
-    <div ref={setNodeRef} style={style} className={`group ${isEditing ? "z-50" : ""}`} {...(isEditing ? {} : attributes)}>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group ${isEditing ? "z-50" : ""}`}
+      {...(isEditing ? {} : attributes)}
+      onClick={(e) => e.stopPropagation()}
+    >
       {!isEditing && (
         <div {...listeners} className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing">
           <div className="px-3 py-0.5 rounded-full bg-clay-700 text-white text-[10px] font-medium shadow-lg">drag</div>
         </div>
       )}
       <button
-        onClick={() => onDelete(card.id)}
+        onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
         className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs opacity-0 group-hover:opacity-100 transition hover:bg-red-600 shadow-lg flex items-center justify-center z-10"
       >
         &times;

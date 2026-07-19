@@ -347,4 +347,72 @@ export const TEMPLATES: BoardTemplate[] = [
       },
     ],
   },
+  {
+    id: "content-calendar",
+    name: "Content Calendar",
+    description: "Monthly social and editorial content planning with themes and deadlines",
+    icon: "calendar",
+    cards: [
+      {
+        type: "heading",
+        content: { text: "Content Calendar" },
+        x: 40, y: 40, width: 480, height: 70,
+      },
+      {
+        type: "note",
+        content: { text: "## Month\nMonth:\nTheme:\nCampaign:\nPlatforms:\nContent pillars:\n• Educational\n• Behind-the-scenes\n• Portfolio\n• Client work\n• Promotional" },
+        x: 40, y: 140, width: 280, height: 260,
+      },
+      {
+        type: "color",
+        content: { color: "#5c7e53" },
+        x: 340, y: 140, width: 130, height: 130,
+      },
+      {
+        type: "color",
+        content: { color: "#af8d6a" },
+        x: 490, y: 140, width: 130, height: 130,
+      },
+      {
+        type: "color",
+        content: { color: "#d9a44e" },
+        x: 640, y: 140, width: 130, height: 130,
+      },
+      {
+        type: "note",
+        content: { text: "## Week 1 — Mon 3 – Sun 9\nMon:\nTue:\nWed:\nThu:\nFri:\nSat:\nSun:" },
+        x: 40, y: 430, width: 240, height: 240,
+      },
+      {
+        type: "note",
+        content: { text: "## Week 2 — Mon 10 – Sun 16\nMon:\nTue:\nWed:\nThu:\nFri:\nSat:\nSun:" },
+        x: 300, y: 430, width: 240, height: 240,
+      },
+      {
+        type: "note",
+        content: { text: "## Week 3 — Mon 17 – Sun 23\nMon:\nTue:\nWed:\nThu:\nFri:\nSat:\nSun:" },
+        x: 560, y: 430, width: 240, height: 240,
+      },
+      {
+        type: "note",
+        content: { text: "## Week 4 — Mon 24 – Sun 30\nMon:\nTue:\nWed:\nThu:\nFri:\nSat:\nSun:" },
+        x: 820, y: 430, width: 240, height: 240,
+      },
+      {
+        type: "note",
+        content: { text: "## Key Dates & Deadlines\n• Post shoot: \n• Edit review: \n• Client approval: \n• First post: \n• Campaign end:" },
+        x: 40, y: 700, width: 280, height: 200,
+      },
+      {
+        type: "todo",
+        content: { items: ["Write captions for Week 1", "Schedule photo shoots", "Prepare story templates", "Confirm client approvals", "Review analytics from last month"] },
+        x: 340, y: 700, width: 280, height: 220,
+      },
+      {
+        type: "note",
+        content: { text: "## Hashtags & Keywords\nPrimary:\n\nSecondary:\n\nBranded:\n\nKeywords:" },
+        x: 640, y: 700, width: 280, height: 200,
+      },
+    ],
+  },
 ];

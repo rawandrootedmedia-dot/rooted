@@ -9,15 +9,16 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  role      String   @default("member")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  clients   Client[]
-  projects  Project[]
+  id               String           @id @default(cuid())
+  email            String           @unique
+  password         String
+  name             String?
+  role             String           @default("member")
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  clients          Client[]
+  projects         Project[]
+  customTemplates  CustomTemplate[]
 }
 
 model Client {
@@ -102,6 +103,17 @@ model CallSheet {
   notes     String?
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CustomTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  icon      String   @default("clipboard")
+  cards     Json
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

@@ -66,6 +66,7 @@ const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
   style: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" /></svg>,
   clock: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
   eye: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+  clipboard: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>,
 };
 
 type EditableCardProps = {
@@ -285,27 +286,40 @@ function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
 }
 
 function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId: string) => void; onClose: () => void; boardId: string }) {
-  const [templates, setTemplates] = useState<Template[]>([]);
+  const [builtIn, setBuiltIn] = useState<Template[]>([]);
+  const [custom, setCustom] = useState<Template[]>([]);
   const [applying, setApplying] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/templates").then((r) => r.json()).then((d) => setTemplates(d.templates || []));
+    fetch("/api/templates").then((r) => r.json()).then((d) => {
+      setBuiltIn(d.builtIn || []);
+      setCustom(d.custom || []);
+    });
   }, []);
 
-  async function applyTemplate(t: Template) {
+  async function applyTemplate(t: Template, isCustom?: boolean) {
     setApplying(t.id);
     const res = await fetch("/api/templates/apply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ boardId, templateId: t.id }),
+      body: JSON.stringify({ boardId, templateId: t.id, isCustom }),
     });
     if (res.ok) onSelect(t.id);
     setApplying(null);
   }
 
+  async function deleteCustomTemplate(t: Template) {
+    if (!confirm(`Delete "${t.name}"?`)) return;
+    setDeleting(t.id);
+    await fetch(`/api/templates/${t.id}`, { method: "DELETE" });
+    setCustom((prev) => prev.filter((c) => c.id !== t.id));
+    setDeleting(null);
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-auto m-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-auto m-4" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-sage-200 dark:border-charcoal-700 flex items-center justify-between">
           <div>
             <h2 className="font-serif text-2xl text-clay-800 dark:text-clay-200">Board Templates</h2>
@@ -315,23 +329,54 @@ function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId:
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
-        <div className="p-6 grid gap-4 sm:grid-cols-2">
-          {templates.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => applyTemplate(t)}
-              disabled={applying === t.id}
-              className="text-left p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 hover:border-sage-400 dark:hover:border-sage-600 bg-bone-50 dark:bg-charcoal-800 transition group disabled:opacity-50"
-            >
-              <div className="w-10 h-10 rounded-lg bg-clay-100 dark:bg-clay-900/30 flex items-center justify-center text-clay-600 dark:text-clay-400 mb-3 group-hover:scale-105 transition">
-                {TEMPLATE_ICONS[t.icon] || TEMPLATE_ICONS.document}
+        <div className="p-6 space-y-6">
+          {custom.length > 0 && (
+            <div>
+              <h3 className="text-sm font-medium text-charcoal-600 dark:text-charcoal-400 mb-3">My Templates</h3>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {custom.map((t) => (
+                  <div key={t.id} className="text-left p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 hover:border-sage-400 dark:hover:border-sage-600 bg-bone-50 dark:bg-charcoal-800 transition group relative">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteCustomTemplate(t); }}
+                      disabled={deleting === t.id}
+                      className="absolute top-2 right-2 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 text-charcoal-400 hover:text-red-600 transition"
+                      title="Delete template"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                    <button onClick={() => applyTemplate(t, true)} disabled={applying === t.id} className="w-full">
+                      <div className="w-10 h-10 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600 dark:text-sage-400 mb-3">
+                        {TEMPLATE_ICONS[t.icon] || TEMPLATE_ICONS.clipboard}
+                      </div>
+                      <h3 className="font-medium text-charcoal-900 dark:text-bone-100 text-sm">{t.name}</h3>
+                      {applying === t.id && <p className="text-xs text-sage-600 mt-2">Applying...</p>}
+                    </button>
+                  </div>
+                ))}
               </div>
-              <h3 className="font-medium text-charcoal-900 dark:text-bone-100 text-sm">{t.name}</h3>
-              <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-1">{t.description}</p>
-              {applying === t.id && <p className="text-xs text-sage-600 mt-2">Applying...</p>}
-            </button>
-          ))}
-          <button onClick={onClose} className="text-left p-4 rounded-xl border-2 border-dashed border-sage-300 dark:border-charcoal-600 hover:border-sage-400 dark:hover:border-sage-500 bg-transparent transition group">
+            </div>
+          )}
+          <div>
+            <h3 className="text-sm font-medium text-charcoal-600 dark:text-charcoal-400 mb-3">Built-in Templates</h3>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {builtIn.map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => applyTemplate(t)}
+                  disabled={applying === t.id}
+                  className="text-left p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 hover:border-sage-400 dark:hover:border-sage-600 bg-bone-50 dark:bg-charcoal-800 transition group disabled:opacity-50"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-clay-100 dark:bg-clay-900/30 flex items-center justify-center text-clay-600 dark:text-clay-400 mb-3 group-hover:scale-105 transition">
+                    {TEMPLATE_ICONS[t.icon] || TEMPLATE_ICONS.document}
+                  </div>
+                  <h3 className="font-medium text-charcoal-900 dark:text-bone-100 text-sm">{t.name}</h3>
+                  <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-1">{t.description}</p>
+                  {applying === t.id && <p className="text-xs text-sage-600 mt-2">Applying...</p>}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button onClick={onClose} className="w-full text-left p-4 rounded-xl border-2 border-dashed border-sage-300 dark:border-charcoal-600 hover:border-sage-400 dark:hover:border-sage-500 bg-transparent transition group">
             <div className="w-10 h-10 rounded-lg bg-bone-200 dark:bg-charcoal-700 flex items-center justify-center text-charcoal-400 mb-3">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
             </div>
@@ -367,6 +412,9 @@ export default function BoardPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [savingTemplate, setSavingTemplate] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -393,6 +441,22 @@ export default function BoardPage() {
       body: JSON.stringify(data),
     });
   }, []);
+
+  async function saveAsTemplate() {
+    if (!templateName.trim()) return;
+    setSavingTemplate(true);
+    const res = await fetch("/api/templates/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ boardId: id, name: templateName.trim(), icon: "clipboard" }),
+    });
+    if (res.ok) {
+      setShowSaveTemplate(false);
+      setTemplateName("");
+      alert("Template saved!");
+    }
+    setSavingTemplate(false);
+  }
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const cardId = event.active.id;
@@ -542,6 +606,33 @@ export default function BoardPage() {
         <TemplatePicker boardId={id as string} onSelect={handleTemplateApplied} onClose={() => setShowTemplates(false)} />
       )}
 
+      {showSaveTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowSaveTemplate(false)}>
+          <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-sm m-4 p-6" onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-serif text-xl text-clay-800 dark:text-clay-200 mb-1">Save as Template</h2>
+            <p className="text-sm text-charcoal-500 dark:text-charcoal-400 mb-4">Save this board's layout for reuse</p>
+            <input
+              value={templateName}
+              onChange={(e) => setTemplateName(e.target.value)}
+              placeholder="Template name"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400 mb-4"
+              autoFocus
+              onKeyDown={(e) => e.key === "Enter" && saveAsTemplate()}
+            />
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setShowSaveTemplate(false); setTemplateName(""); }} className="px-3 py-1.5 rounded-lg text-charcoal-500 hover:bg-sage-50 dark:hover:bg-charcoal-800 text-sm transition">Cancel</button>
+              <button
+                onClick={saveAsTemplate}
+                disabled={!templateName.trim() || savingTemplate}
+                className="px-4 py-1.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition disabled:opacity-50"
+              >
+                {savingTemplate ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-sage-200 dark:border-charcoal-700 bg-white/80 dark:bg-charcoal-950/80 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-3">
           <Link href={`/projects/${board.project?.id}`} className="text-sm text-sage-600 dark:text-sage-400 hover:underline">&larr;</Link>
@@ -569,6 +660,15 @@ export default function BoardPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          {cards.length > 0 && (
+            <button
+              onClick={() => setShowSaveTemplate(true)}
+              className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+              Save as Template
+            </button>
+          )}
           <button
             onClick={() => setShowTemplates(true)}
             className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1.5"

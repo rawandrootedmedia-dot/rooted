@@ -68,7 +68,137 @@ const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
   eye: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
 };
 
-function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: string) => void }) {
+type EditableCardProps = {
+  card: CardData;
+  editing: boolean;
+  onStartEdit: () => void;
+  onSave: (content: any) => void;
+};
+
+function EditableNote({ card, editing, onStartEdit, onSave }: EditableCardProps) {
+  const [val, setVal] = useState(card.content?.text || "");
+  useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
+  if (editing) return (
+    <textarea
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onBlur={() => onSave({ text: val })}
+      onKeyDown={(e) => { if (e.key === "Escape") onSave({ text: val }); }}
+      className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-2 border-sage-400 dark:border-sage-600 resize-none text-sm text-charcoal-700 dark:text-charcoal-300 focus:outline-none"
+      autoFocus
+    />
+  );
+  return (
+    <div onClick={onStartEdit} className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 overflow-auto cursor-text group-hover:border-sage-300 dark:group-hover:border-charcoal-600 transition">
+      <p className="text-sm text-charcoal-700 dark:text-charcoal-300 whitespace-pre-wrap">{card.content?.text || <span className="text-charcoal-300 dark:text-charcoal-500 italic">Click to type...</span>}</p>
+    </div>
+  );
+}
+
+function EditableHeading({ card, editing, onStartEdit, onSave }: EditableCardProps) {
+  const [val, setVal] = useState(card.content?.text || "");
+  useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
+  if (editing) return (
+    <input
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onBlur={() => onSave({ text: val })}
+      onKeyDown={(e) => { if (e.key === "Enter") onSave({ text: val }); if (e.key === "Escape") onSave({ text: val }); }}
+      className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-2 border-sage-400 dark:border-sage-600 font-serif text-lg text-clay-800 dark:text-clay-200 focus:outline-none"
+      autoFocus
+    />
+  );
+  return (
+    <div onClick={onStartEdit} className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-l-4 border-clay-400 cursor-text group-hover:border-l-clay-500 transition">
+      <h3 className="font-serif text-lg text-clay-800 dark:text-clay-200">{card.content?.text || <span className="text-charcoal-300 dark:text-charcoal-500 italic">Click to type...</span>}</h3>
+    </div>
+  );
+}
+
+function EditableTodo({ card, editing, onStartEdit, onSave }: EditableCardProps) {
+  const items: string[] = card.content?.items || [];
+  const [localItems, setLocalItems] = useState<string[]>([...items, ""]);
+  useEffect(() => {
+    setLocalItems([...(card.content?.items || []), ""]);
+  }, [card.content?.items]);
+
+  function commit() {
+    const filtered = localItems.map((s) => s.trim()).filter(Boolean);
+    onSave({ items: filtered });
+  }
+
+  if (editing) return (
+    <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-2 border-sage-400 dark:border-sage-600 overflow-auto" onBlur={commit}>
+      <p className="text-xs font-medium text-charcoal-500 dark:text-charcoal-400 uppercase tracking-wider mb-2">To-Do</p>
+      <div className="space-y-1.5">
+        {localItems.map((item, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="text-charcoal-300 dark:text-charcoal-600 text-sm">&#9744;</span>
+            <input
+              value={item}
+              onChange={(e) => {
+                const next = [...localItems];
+                next[i] = e.target.value;
+                if (i === next.length - 1 && e.target.value) next.push("");
+                setLocalItems(next);
+              }}
+              onBlur={commit}
+              onKeyDown={(e) => { if (e.key === "Escape") commit(); }}
+              placeholder={i === localItems.length - 1 ? "Add item..." : ""}
+              className="flex-1 bg-transparent border-none text-sm text-charcoal-700 dark:text-charcoal-300 focus:outline-none placeholder:text-charcoal-300 dark:placeholder:text-charcoal-600"
+              autoFocus={i === 0}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  return (
+    <div onClick={onStartEdit} className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 overflow-auto cursor-text group-hover:border-sage-300 dark:group-hover:border-charcoal-600 transition">
+      <p className="text-xs font-medium text-charcoal-500 dark:text-charcoal-400 uppercase tracking-wider mb-2">To-Do</p>
+      {items.length > 0 ? (
+        <ul className="space-y-1.5">
+          {items.map((item, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <span className="mt-0.5 text-charcoal-300 dark:text-charcoal-600 text-sm select-none">&#9744;</span>
+              <span className="text-sm text-charcoal-700 dark:text-charcoal-300">{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-charcoal-400 italic">Click to add items...</p>
+      )}
+    </div>
+  );
+}
+
+function EditableLink({ card, editing, onStartEdit, onSave }: EditableCardProps) {
+  const [label, setLabel] = useState(card.content?.label || "");
+  const [url, setUrl] = useState(card.content?.url || "");
+  useEffect(() => { setLabel(card.content?.label || ""); setUrl(card.content?.url || ""); }, [card.content?.label, card.content?.url]);
+  if (editing) return (
+    <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-2 border-sage-400 dark:border-sage-600 flex flex-col justify-center gap-2" onBlur={() => onSave({ label, url })}>
+      <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label" className="px-2 py-1 text-sm rounded border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none" autoFocus />
+      <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className="px-2 py-1 text-sm rounded border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none" onKeyDown={(e) => { if (e.key === "Enter") onSave({ label, url }); }} />
+    </div>
+  );
+  return (
+    <div onClick={onStartEdit} className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 flex flex-col justify-center overflow-hidden cursor-text group-hover:border-sage-300 dark:group-hover:border-charcoal-600 transition">
+      <p className="text-xs text-charcoal-400 mb-1 truncate">Link</p>
+      <a href={card.content?.url || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-sage-600 dark:text-sage-400 hover:underline truncate" onClick={(e) => e.stopPropagation()}>
+        {card.content?.label || card.content?.url || <span className="text-charcoal-300 dark:text-charcoal-500 italic">Click to add...</span>}
+      </a>
+    </div>
+  );
+}
+
+function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
+  card: CardData;
+  onDelete: (id: string) => void;
+  editingId: string | null;
+  onStartEdit: (id: string) => void;
+  onSave: (id: string, content: any) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: card.id });
 
   const style: React.CSSProperties = {
@@ -77,10 +207,12 @@ function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: stri
     top: card.y,
     width: card.width,
     height: card.height,
-    zIndex: card.zIndex,
+    zIndex: editingId === card.id ? 999 : card.zIndex,
     transform: transform ? `translate(${transform.x}px, ${transform.y}px)` : undefined,
     transition: transform ? undefined : "box-shadow 0.15s ease",
   };
+
+  const isEditing = editingId === card.id;
 
   const cardVisual = () => {
     switch (card.type) {
@@ -106,24 +238,20 @@ function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: stri
                 loading="lazy"
               />
             ) : card.content?.url ? (
-              <video
-                src={card.content.url}
-                className="w-full h-full object-contain"
-                controls
-                playsInline
-                preload="metadata"
-              />
+              <video src={card.content.url} className="w-full h-full object-contain" controls playsInline preload="metadata" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-charcoal-400 text-xs">No video</div>
             )}
           </div>
         );
       case "note":
-        return (
-          <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 overflow-auto">
-            <p className="text-sm text-charcoal-700 dark:text-charcoal-300 whitespace-pre-wrap">{card.content?.text || "Write a note..."}</p>
-          </div>
-        );
+        return <EditableNote card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+      case "heading":
+        return <EditableHeading card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+      case "todo":
+        return <EditableTodo card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+      case "link":
+        return <EditableLink card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
       case "color":
         return (
           <div className="w-full h-full rounded-xl overflow-hidden border border-sage-200 dark:border-charcoal-700">
@@ -133,49 +261,18 @@ function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: stri
             </div>
           </div>
         );
-      case "heading":
-        return (
-          <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-l-4 border-clay-400">
-            <h3 className="font-serif text-lg text-clay-800 dark:text-clay-200">{card.content?.text || "Heading"}</h3>
-          </div>
-        );
-      case "todo":
-        return (
-          <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 overflow-auto">
-            <p className="text-xs font-medium text-charcoal-500 dark:text-charcoal-400 uppercase tracking-wider mb-2">To-Do</p>
-            {(card.content?.items as string[])?.length > 0 ? (
-              <ul className="space-y-1.5">
-                {(card.content?.items as string[]).map((item: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <input type="checkbox" className="mt-0.5 rounded border-sage-300 dark:border-charcoal-600 text-sage-600 focus:ring-sage-500" readOnly />
-                    <span className="text-sm text-charcoal-700 dark:text-charcoal-300">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-charcoal-400">Empty list</p>
-            )}
-          </div>
-        );
-      case "link":
-        return (
-          <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 flex flex-col justify-center overflow-hidden">
-            <p className="text-xs text-charcoal-400 mb-1 truncate">Link</p>
-            <a href={card.content?.url || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-sage-600 dark:text-sage-400 hover:underline truncate">
-              {card.content?.label || card.content?.url || "Add a URL"}
-            </a>
-          </div>
-        );
       default:
-        return <div className="text-xs text-charcoal-400 p-4">Unknown card type</div>;
+        return <div className="text-xs text-charcoal-400 p-4">Unknown</div>;
     }
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="group" {...attributes}>
-      <div {...listeners} className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing">
-        <div className="px-3 py-0.5 rounded-full bg-clay-700 text-white text-[10px] font-medium shadow-lg">drag</div>
-      </div>
+    <div ref={setNodeRef} style={style} className={`group ${isEditing ? "z-50" : ""}`} {...(isEditing ? {} : attributes)}>
+      {!isEditing && (
+        <div {...listeners} className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing">
+          <div className="px-3 py-0.5 rounded-full bg-clay-700 text-white text-[10px] font-medium shadow-lg">drag</div>
+        </div>
+      )}
       <button
         onClick={() => onDelete(card.id)}
         className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs opacity-0 group-hover:opacity-100 transition hover:bg-red-600 shadow-lg flex items-center justify-center z-10"
@@ -202,9 +299,7 @@ function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId:
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ boardId, templateId: t.id }),
     });
-    if (res.ok) {
-      onSelect(t.id);
-    }
+    if (res.ok) onSelect(t.id);
     setApplying(null);
   }
 
@@ -236,10 +331,7 @@ function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId:
               {applying === t.id && <p className="text-xs text-sage-600 mt-2">Applying...</p>}
             </button>
           ))}
-          <button
-            onClick={onClose}
-            className="text-left p-4 rounded-xl border-2 border-dashed border-sage-300 dark:border-charcoal-600 hover:border-sage-400 dark:hover:border-sage-500 bg-transparent transition group"
-          >
+          <button onClick={onClose} className="text-left p-4 rounded-xl border-2 border-dashed border-sage-300 dark:border-charcoal-600 hover:border-sage-400 dark:hover:border-sage-500 bg-transparent transition group">
             <div className="w-10 h-10 rounded-lg bg-bone-200 dark:bg-charcoal-700 flex items-center justify-center text-charcoal-400 mb-3">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
             </div>
@@ -252,6 +344,16 @@ function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId:
   );
 }
 
+const TOOLBAR_ITEMS = [
+  { type: "note", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z", label: "Note", color: "bg-bone-200 dark:bg-charcoal-800 text-clay-600" },
+  { type: "heading", icon: "M4 6h16M4 12h16M4 18h7", label: "Heading", color: "bg-sage-100 dark:bg-sage-900/30 text-sage-600" },
+  { type: "todo", icon: "M9 5l7 7-7 7", label: "To-Do", color: "bg-clay-100 dark:bg-clay-900/30 text-clay-600" },
+  { type: "link", icon: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1", label: "Link", color: "bg-charcoal-100 dark:bg-charcoal-800 text-charcoal-600" },
+  { type: "color", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Color", color: "bg-sage-100 dark:bg-sage-900/30 text-sage-600" },
+  { type: "image", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Image", color: "bg-sage-100 dark:bg-sage-900/30 text-sage-600" },
+  { type: "video", icon: "M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM15.75 16.5a12.015 12.015 0 00-7.5 0m11.25-1.5a12.015 12.015 0 00-7.5-2.25m-7.5 9.75h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003.75 6v12a1.5 1.5 0 001.5 1.5z", label: "Video", color: "bg-sage-100 dark:bg-sage-900/30 text-sage-600" },
+];
+
 export default function BoardPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -259,11 +361,12 @@ export default function BoardPage() {
   const [cards, setCards] = useState<CardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showTemplates, setShowTemplates] = useState(false);
-  const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
-  const [videoMenuOpen, setVideoMenuOpen] = useState(false);
+  const [showVideoInput, setShowVideoInput] = useState(false);
   const [colorValue, setColorValue] = useState("#e8dfd3");
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [dragType, setDragType] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -297,37 +400,38 @@ export default function BoardPage() {
     const card = cards.find((c) => c.id === cardId);
     if (!card) return;
 
-    const newX = card.x + delta.x;
-    const newY = card.y + delta.y;
+    const newX = Math.max(0, card.x + delta.x);
+    const newY = Math.max(0, card.y + delta.y);
 
     setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, x: newX, y: newY } : c)));
     await updateCard(cardId as string, { x: newX, y: newY });
   }, [cards, updateCard]);
 
-  async function addCard(type: string, content: any) {
-    const offset = 20;
+  async function createCard(type: string, content: any, x?: number, y?: number) {
+    const canvas = canvasRef.current;
+    let cx = 40 + cards.length * 20;
+    let cy = 40 + cards.length * 20;
+    if (x !== undefined && y !== undefined) {
+      cx = Math.max(0, x - 130);
+      cy = Math.max(0, y - 50);
+    } else if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      cx = Math.max(0, canvas.scrollLeft + rect.width / 2 - 130);
+      cy = Math.max(0, canvas.scrollTop + rect.height / 2 - 100);
+    }
     const w = type === "image" ? 320 : type === "video" ? 400 : type === "color" ? 200 : 260;
     const h = type === "image" ? 320 : type === "video" ? 260 : type === "color" ? 200 : type === "heading" ? 80 : 200;
-    const newCard = {
-      type, content,
-      x: 40 + cards.length * offset,
-      y: 40 + cards.length * offset,
-      width: w, height: h,
-      boardId: id,
-    };
 
     const res = await fetch("/api/cards", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newCard),
+      body: JSON.stringify({ type, content, x: cx, y: cy, width: w, height: h, boardId: id }),
     });
 
     if (res.ok) {
       const data = await res.json();
       setCards((prev) => [...prev, data.card]);
     }
-    setAddMenuOpen(false);
-    setVideoMenuOpen(false);
   }
 
   async function deleteCard(cardId: string) {
@@ -345,7 +449,7 @@ export default function BoardPage() {
     const res = await fetch("/api/upload", { method: "POST", body: formData });
     if (res.ok) {
       const data = await res.json();
-      addCard(cardType, { url: data.key, name: data.name });
+      createCard(cardType, { url: data.key, name: data.name });
     }
   }
 
@@ -353,7 +457,65 @@ export default function BoardPage() {
     const trimmed = videoUrl.trim();
     if (!trimmed) return;
     const embedUrl = getVideoEmbedUrl(trimmed);
-    addCard("video", { url: trimmed, embedUrl, label: trimmed });
+    createCard("video", { url: trimmed, embedUrl, label: trimmed });
+    setVideoUrl("");
+    setShowVideoInput(false);
+  }
+
+  function handleToolbarClick(type: string) {
+    if (type === "image") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = (e) => handleFileUpload(e as any, "image");
+      input.click();
+      return;
+    }
+    if (type === "video") {
+      setShowVideoInput(!showVideoInput);
+      return;
+    }
+    if (type === "color") {
+      createCard("color", { color: colorValue });
+      return;
+    }
+    createCard(type, type === "note" ? { text: "" } : type === "heading" ? { text: "" } : type === "todo" ? { items: [] } : type === "link" ? { url: "", label: "" } : {});
+  }
+
+  function handleSaveCard(cardId: string, content: any) {
+    setEditingId(null);
+    setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, content } : c)));
+    updateCard(cardId, { content });
+  }
+
+  function handleCanvasDrop(e: React.DragEvent) {
+    e.preventDefault();
+    const type = e.dataTransfer.getData("text/plain");
+    if (!type || !canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left + canvasRef.current.scrollLeft;
+    const y = e.clientY - rect.top + canvasRef.current.scrollTop;
+    if (type === "image" || type === "video") {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = type === "image" ? "image/*" : "video/*";
+      input.onchange = (ev) => {
+        const file = (ev.target as HTMLInputElement).files?.[0];
+        if (!file) return;
+        const fd = new FormData();
+        fd.append("file", file);
+        fetch("/api/upload", { method: "POST", body: fd }).then((r) => r.json()).then((d) => {
+          if (d.key) createCard(type, { url: d.key, name: d.name }, x, y);
+        });
+      };
+      input.click();
+      return;
+    }
+    if (type === "color") {
+      createCard("color", { color: colorValue }, x, y);
+      return;
+    }
+    createCard(type, type === "note" ? { text: "" } : type === "heading" ? { text: "" } : type === "todo" ? { items: [] } : type === "link" ? { url: "", label: "" } : {}, x, y);
   }
 
   async function deleteBoard() {
@@ -414,121 +576,79 @@ export default function BoardPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
             Templates
           </button>
-
-          <div className="relative">
-            <button
-              onClick={() => { setAddMenuOpen(!addMenuOpen); setVideoMenuOpen(false); }}
-              className="px-4 py-1.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition flex items-center gap-1.5"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              Add Card
-            </button>
-
-            {addMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-charcoal-900 rounded-xl border border-sage-200 dark:border-charcoal-700 shadow-xl z-50 p-3 space-y-1">
-                <p className="text-[10px] font-semibold text-charcoal-400 uppercase tracking-wider px-2 pt-1 pb-1">Media</p>
-                <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 cursor-pointer transition">
-                  <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                  </div>
-                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Image</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, "image")} />
-                </label>
-
-                <button onClick={() => { setVideoMenuOpen(!videoMenuOpen); }} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                  <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.75 16.5a12.015 12.015 0 00-7.5 0m11.25-1.5a12.015 12.015 0 00-7.5-2.25m-7.5 9.75h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003.75 6v12a1.5 1.5 0 001.5 1.5z" /></svg>
-                  </div>
-                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Video</span>
-                </button>
-
-                {videoMenuOpen && (
-                  <div className="pl-11 pr-2 pb-2 space-y-2">
-                    <label className="flex items-center gap-2 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 cursor-pointer transition text-sm text-charcoal-600 dark:text-charcoal-400">
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                      Upload file
-                      <input type="file" accept="video/*" className="hidden" onChange={(e) => handleFileUpload(e, "video")} />
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        value={videoUrl}
-                        onChange={(e) => setVideoUrl(e.target.value)}
-                        placeholder="YouTube or Vimeo URL"
-                        className="flex-1 px-2 py-1.5 text-xs rounded-lg border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400"
-                        onKeyDown={(e) => e.key === "Enter" && handleVideoEmbed()}
-                      />
-                      <button onClick={handleVideoEmbed} className="px-2 py-1 rounded-lg bg-sage-600 hover:bg-sage-700 text-white text-xs font-medium transition">Embed</button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="border-t border-sage-200 dark:border-charcoal-700 my-1" />
-                <p className="text-[10px] font-semibold text-charcoal-400 uppercase tracking-wider px-2 pt-1 pb-1">Content</p>
-                <button onClick={() => addCard("note", { text: "" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                  <div className="w-8 h-8 rounded-lg bg-bone-200 dark:bg-charcoal-800 flex items-center justify-center text-clay-600">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                  </div>
-                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Note</span>
-                </button>
-
-                <button onClick={() => addCard("heading", { text: "New Heading" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                  <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
-                  </div>
-                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Heading</span>
-                </button>
-
-                <button onClick={() => addCard("color", { color: colorValue })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                  <div className="w-8 h-8 rounded-lg border border-sage-200 dark:border-charcoal-700" style={{ backgroundColor: colorValue }} />
-                  <div className="flex-1 flex items-center gap-2">
-                    <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Color</span>
-                    <input type="color" value={colorValue} onChange={(e) => setColorValue(e.target.value)} className="w-6 h-6 rounded cursor-pointer" onClick={(e) => e.stopPropagation()} />
-                  </div>
-                </button>
-
-                <button onClick={() => addCard("todo", { items: [] })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                  <div className="w-8 h-8 rounded-lg bg-clay-100 dark:bg-clay-900/30 flex items-center justify-center text-clay-600">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                  </div>
-                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">To-Do</span>
-                </button>
-
-                <button onClick={() => addCard("link", { url: "", label: "" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                  <div className="w-8 h-8 rounded-lg bg-charcoal-100 dark:bg-charcoal-800 flex items-center justify-center text-charcoal-600">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                  </div>
-                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Link</span>
-                </button>
-              </div>
-            )}
-          </div>
         </div>
       </div>
 
-      <div ref={canvasRef} className="flex-1 overflow-auto bg-bone-50 dark:bg-charcoal-950">
+      {showVideoInput && (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-900">
+          <input
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="YouTube or Vimeo URL"
+            className="flex-1 max-w-md px-3 py-1.5 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400"
+            onKeyDown={(e) => e.key === "Enter" && handleVideoEmbed()}
+          />
+          <button onClick={handleVideoEmbed} className="px-3 py-1.5 rounded-lg bg-sage-600 hover:bg-sage-700 text-white text-sm font-medium transition">Embed</button>
+          <button onClick={() => { setShowVideoInput(false); setVideoUrl(""); }} className="px-3 py-1.5 rounded-lg text-charcoal-400 hover:text-charcoal-600 text-sm">Cancel</button>
+        </div>
+      )}
+
+      <div
+        ref={canvasRef}
+        className="flex-1 overflow-auto bg-bone-50 dark:bg-charcoal-950 relative"
+        onDragOver={(e) => { if (dragType) e.preventDefault(); }}
+        onDrop={handleCanvasDrop}
+        onClick={() => { setEditingId(null); setShowVideoInput(false); }}
+      >
         {cards.length === 0 && !showTemplates ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4">
             <div className="w-20 h-20 rounded-2xl bg-bone-200 dark:bg-charcoal-800 flex items-center justify-center mb-6">
               <svg className="w-10 h-10 text-clay-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
             </div>
             <h2 className="font-serif text-2xl text-clay-800 dark:text-clay-200 mb-2">This board is empty</h2>
-            <p className="text-charcoal-500 dark:text-charcoal-400 text-sm mb-8 max-w-sm">Start with a template or add cards one at a time.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setShowTemplates(true)} className="px-5 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white font-medium transition">Browse Templates</button>
-              <button onClick={() => setAddMenuOpen(true)} className="px-5 py-2.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-700 dark:text-charcoal-300 font-medium hover:bg-sage-50 dark:hover:bg-charcoal-800 transition">Add Card</button>
-            </div>
+            <p className="text-charcoal-500 dark:text-charcoal-400 text-sm mb-8 max-w-sm">Click a tool from the sidebar to add cards, or start with a template.</p>
+            <button onClick={() => setShowTemplates(true)} className="px-5 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white font-medium transition">Browse Templates</button>
           </div>
         ) : (
-          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-            <div
-              className="board-canvas relative min-w-[200%] min-h-[200%] w-[4000px] h-[4000px]"
-              onClick={() => { setAddMenuOpen(false); setVideoMenuOpen(false); }}
-            >
-              {cards.map((card) => (
-                <DraggableCard key={card.id} card={card} onDelete={deleteCard} />
+          <>
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              <div
+                className="board-canvas relative min-w-[200%] min-h-[200%] w-[4000px] h-[4000px]"
+                onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
+              >
+                {cards.map((card) => (
+                  <DraggableCard
+                    key={card.id}
+                    card={card}
+                    onDelete={deleteCard}
+                    editingId={editingId}
+                    onStartEdit={setEditingId}
+                    onSave={handleSaveCard}
+                  />
+                ))}
+              </div>
+            </DndContext>
+
+            <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1.5">
+              {TOOLBAR_ITEMS.map((item) => (
+                <div key={item.type} className="relative group/tool">
+                  <button
+                    draggable
+                    onDragStart={(e) => { setDragType(item.type); e.dataTransfer.setData("text/plain", item.type); }}
+                    onDragEnd={() => setDragType(null)}
+                    onClick={(e) => { e.stopPropagation(); handleToolbarClick(item.type); }}
+                    className={`w-10 h-10 rounded-xl ${item.color} flex items-center justify-center shadow-md border border-sage-200 dark:border-charcoal-700 hover:scale-110 transition-transform cursor-grab active:cursor-grabbing`}
+                    title={item.label}
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} /></svg>
+                  </button>
+                  <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-charcoal-900 text-bone-100 text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/tool:opacity-100 transition pointer-events-none">
+                    {item.label}
+                  </span>
+                </div>
               ))}
             </div>
-          </DndContext>
+          </>
         )}
       </div>
     </div>

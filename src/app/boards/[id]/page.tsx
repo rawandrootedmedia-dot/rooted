@@ -64,6 +64,8 @@ const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
   film: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m0 0V5.625c0-.621.504-1.125 1.125-1.125h7.5c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125" /></svg>,
   pin: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>,
   style: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" /></svg>,
+  clock: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+  eye: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
 };
 
 function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: string) => void }) {
@@ -261,6 +263,7 @@ export default function BoardPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [videoMenuOpen, setVideoMenuOpen] = useState(false);
   const [colorValue, setColorValue] = useState("#e8dfd3");
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -353,6 +356,12 @@ export default function BoardPage() {
     addCard("video", { url: trimmed, embedUrl, label: trimmed });
   }
 
+  async function deleteBoard() {
+    await fetch(`/api/boards/${id}`, { method: "DELETE" });
+    const projectId = board?.project?.id;
+    router.push(projectId ? `/projects/${projectId}` : "/dashboard");
+  }
+
   function handleTemplateApplied() {
     setShowTemplates(false);
     fetch(`/api/boards/${id}`)
@@ -375,6 +384,21 @@ export default function BoardPage() {
         <div className="flex items-center gap-3">
           <Link href={`/projects/${board.project?.id}`} className="text-sm text-sage-600 dark:text-sage-400 hover:underline">&larr;</Link>
           <span className="font-serif text-lg text-clay-800 dark:text-clay-200">{board.title}</span>
+          {confirmDelete ? (
+            <div className="flex items-center gap-2 ml-2">
+              <span className="text-xs text-red-600 font-medium">Delete this board?</span>
+              <button onClick={deleteBoard} className="px-2 py-1 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700 transition">Yes, delete</button>
+              <button onClick={() => setConfirmDelete(false)} className="px-2 py-1 rounded border border-sage-300 dark:border-charcoal-600 text-xs text-charcoal-600 dark:text-charcoal-400 hover:bg-sage-50 dark:hover:bg-charcoal-800 transition">Cancel</button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              title="Delete board"
+              className="p-1.5 rounded-lg text-charcoal-300 dark:text-charcoal-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+            </button>
+          )}
           {board.project && (
             <span className="text-xs text-charcoal-400 hidden sm:inline">
               {board.project.title} &middot; {board.project.client?.name}

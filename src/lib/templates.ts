@@ -350,7 +350,7 @@ export const TEMPLATES: BoardTemplate[] = [
   {
     id: "content-calendar",
     name: "Content Calendar",
-    description: "Monthly social and editorial content planning with themes and deadlines",
+    description: "Monthly social and editorial content planning with brands, types, and status tracking",
     icon: "calendar",
     cards: [
       {
@@ -360,58 +360,184 @@ export const TEMPLATES: BoardTemplate[] = [
       },
       {
         type: "note",
-        content: { text: "## Month\nMonth:\nTheme:\nCampaign:\nPlatforms:\nContent pillars:\n• Educational\n• Behind-the-scenes\n• Portfolio\n• Client work\n• Promotional" },
-        x: 40, y: 140, width: 280, height: 260,
-      },
-      {
-        type: "color",
-        content: { color: "#5c7e53" },
-        x: 340, y: 140, width: 130, height: 130,
-      },
-      {
-        type: "color",
-        content: { color: "#af8d6a" },
-        x: 490, y: 140, width: 130, height: 130,
+        content: { text: "## Month at a Glance\nMonth:\nTheme:\nCampaign:\nBrand:\nPlatforms:\n\nContent types:\n• Reel\n• Post\n• Story\n• Blog\n• Newsletter\n• YouTube" },
+        x: 40, y: 140, width: 220, height: 270,
       },
       {
         type: "color",
         content: { color: "#d9a44e" },
-        x: 640, y: 140, width: 130, height: 130,
+        x: 280, y: 140, width: 90, height: 90,
+      },
+      {
+        type: "color",
+        content: { color: "#4fa8c9" },
+        x: 390, y: 140, width: 90, height: 90,
+      },
+      {
+        type: "color",
+        content: { color: "#8fbf7f" },
+        x: 500, y: 140, width: 90, height: 90,
       },
       {
         type: "note",
-        content: { text: "## Week 1 — Mon 3 – Sun 9\nMon:\nTue:\nWed:\nThu:\nFri:\nSat:\nSun:" },
-        x: 40, y: 430, width: 240, height: 240,
+        content: { text: "🟡 Raw & Rooted Media\n🔵 Raw Footage Creative Co\n🟢 Fotosynthesis LLC\n\nStatus: Idea → Drafting → Scheduled → Published" },
+        x: 280, y: 250, width: 310, height: 160,
       },
       {
         type: "note",
-        content: { text: "## Week 2 — Mon 10 – Sun 16\nMon:\nTue:\nWed:\nThu:\nFri:\nSat:\nSun:" },
-        x: 300, y: 430, width: 240, height: 240,
+        content: { text: "                               March 2026\n  ┌─────────────────────────────────────────────────────────┐\n  │ Sun │ Mon │ Tue │ Wed │ Thu │ Fri │ Sat │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │     │     │     │     │     │     │  1  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │  2  │  3  │  4  │  5  │  6  │  7  │  8  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │  9  │ 10  │ 11  │ 12  │ 13  │ 14  │ 15  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │ 16  │ 17  │ 18  │ 19  │ 20  │ 21  │ 22  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │ 23  │ 24  │ 25  │ 26  │ 27  │ 28  │ 29  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │ 30  │ 31  │     │     │     │     │     │\n  │     │     │     │     │     │     │     │\n  └─────┴─────┴─────┴─────┴─────┴─────┴─────┘" },
+        x: 40, y: 440, width: 700, height: 480,
       },
       {
         type: "note",
-        content: { text: "## Week 3 — Mon 17 – Sun 23\nMon:\nTue:\nWed:\nThu:\nFri:\nSat:\nSun:" },
-        x: 560, y: 430, width: 240, height: 240,
-      },
-      {
-        type: "note",
-        content: { text: "## Week 4 — Mon 24 – Sun 30\nMon:\nTue:\nWed:\nThu:\nFri:\nSat:\nSun:" },
-        x: 820, y: 430, width: 240, height: 240,
-      },
-      {
-        type: "note",
-        content: { text: "## Key Dates & Deadlines\n• Post shoot: \n• Edit review: \n• Client approval: \n• First post: \n• Campaign end:" },
-        x: 40, y: 700, width: 280, height: 200,
+        content: { text: "## Key Dates\n• Post shoot:\n• Edit review:\n• Client approval:\n• First post:\n• Campaign end:" },
+        x: 770, y: 440, width: 220, height: 210,
       },
       {
         type: "todo",
-        content: { items: ["Write captions for Week 1", "Schedule photo shoots", "Prepare story templates", "Confirm client approvals", "Review analytics from last month"] },
-        x: 340, y: 700, width: 280, height: 220,
+        content: { items: ["Write captions for Week 1", "Schedule photo shoots", "Prepare story templates", "Confirm client approvals", "Review analytics"] },
+        x: 770, y: 680, width: 220, height: 240,
       },
       {
         type: "note",
-        content: { text: "## Hashtags & Keywords\nPrimary:\n\nSecondary:\n\nBranded:\n\nKeywords:" },
-        x: 640, y: 700, width: 280, height: 200,
+        content: { text: "## Hashtags\nPrimary:\nSecondary:\nBranded:\nKeywords:" },
+        x: 40, y: 950, width: 260, height: 170,
+      },
+    ],
+  },
+  {
+    id: "schedule-budget",
+    name: "Schedule & Budget",
+    description: "Shoot day schedule with call times, equipment, and line-item budget",
+    icon: "clock",
+    cards: [
+      {
+        type: "heading",
+        content: { text: "Schedule & Budget" },
+        x: 40, y: 40, width: 480, height: 70,
+      },
+      {
+        type: "heading",
+        content: { text: "Shoot Schedule" },
+        x: 40, y: 140, width: 300, height: 50,
+      },
+      {
+        type: "note",
+        content: { text: "## Day 1\nDate:\nCall time:\nWrap time:\nLocation:\n\nEquipment needed:\n\nNotes / Parking / Permits:" },
+        x: 40, y: 210, width: 300, height: 260,
+      },
+      {
+        type: "note",
+        content: { text: "## Day 2\nDate:\nCall time:\nWrap time:\nLocation:\n\nEquipment needed:\n\nNotes / Parking / Permits:" },
+        x: 360, y: 210, width: 300, height: 260,
+      },
+      {
+        type: "note",
+        content: { text: "## Day 3\nDate:\nCall time:\nWrap time:\nLocation:\n\nEquipment needed:\n\nNotes / Parking / Permits:" },
+        x: 680, y: 210, width: 300, height: 260,
+      },
+      {
+        type: "heading",
+        content: { text: "Budget" },
+        x: 40, y: 510, width: 200, height: 50,
+      },
+      {
+        type: "note",
+        content: { text: "## Crew\n• Photographer:\n• Assistant:\n• MUA:\n• Stylist:\n\n## Equipment\n• Camera body:\n• Lenses:\n• Lighting:\n• Grip:" },
+        x: 40, y: 580, width: 280, height: 260,
+      },
+      {
+        type: "note",
+        content: { text: "## Location & Travel\n• Studio rental:\n• Permits:\n• Travel:\n• Catering:\n\n## Post Production\n• Editing:\n• Color grading:\n• Retouching:" },
+        x: 340, y: 580, width: 280, height: 260,
+      },
+      {
+        type: "note",
+        content: { text: "## Budget Totals\nEstimated:\nActual:\n\nKey:\n🟡 Under budget\n🔴 Over budget" },
+        x: 640, y: 580, width: 280, height: 200,
+      },
+      {
+        type: "todo",
+        content: { items: ["Book crew", "Rent equipment", "Confirm locations", "Arrange catering", "Process invoices"] },
+        x: 640, y: 810, width: 280, height: 200,
+      },
+    ],
+  },
+  {
+    id: "proof-sheet",
+    name: "Client Proof Sheet",
+    description: "Client-facing presentation layout with shot review and status indicators",
+    icon: "eye",
+    cards: [
+      {
+        type: "heading",
+        content: { text: "Client Proof Sheet" },
+        x: 40, y: 40, width: 480, height: 70,
+      },
+      {
+        type: "note",
+        content: { text: "## Project\nClient:\nShoot date:\nDelivery:\nStatus:" },
+        x: 40, y: 140, width: 260, height: 170,
+      },
+      {
+        type: "color",
+        content: { color: "#2f6a80" },
+        x: 320, y: 140, width: 80, height: 80,
+      },
+      {
+        type: "note",
+        content: { text: "✅ Got it ✅" },
+        x: 320, y: 230, width: 80, height: 80,
+      },
+      {
+        type: "color",
+        content: { color: "#4a2429" },
+        x: 420, y: 140, width: 80, height: 80,
+      },
+      {
+        type: "note",
+        content: { text: "❌ Flagged ❌" },
+        x: 420, y: 230, width: 80, height: 80,
+      },
+      {
+        type: "note",
+        content: { text: "## Shot 01 \nType: Wide\nLens:\nStatus: ⬜ Pending" },
+        x: 40, y: 340, width: 200, height: 150,
+      },
+      {
+        type: "note",
+        content: { text: "## Shot 02 \nType: Medium\nLens:\nStatus: ✅ Got it" },
+        x: 270, y: 340, width: 200, height: 150,
+      },
+      {
+        type: "note",
+        content: { text: "## Shot 03 \nType: Close-up\nLens:\nStatus: ❌ Flag" },
+        x: 500, y: 340, width: 200, height: 150,
+      },
+      {
+        type: "note",
+        content: { text: "## Shot 04 \nType: Wide\nLens:\nStatus: ⬜ Pending" },
+        x: 730, y: 340, width: 200, height: 150,
+      },
+      {
+        type: "note",
+        content: { text: "## Shot 05 \nType: Macro\nLens:\nStatus: ✅ Got it" },
+        x: 40, y: 520, width: 200, height: 150,
+      },
+      {
+        type: "note",
+        content: { text: "## Shot 06 \nType: POV\nLens:\nStatus: ⬜ Pending" },
+        x: 270, y: 520, width: 200, height: 150,
+      },
+      {
+        type: "note",
+        content: { text: "## Notes & Revisions\n\nClient feedback:\n\nSelected shots:\n\nRe-shoot needed:" },
+        x: 500, y: 520, width: 340, height: 200,
+      },
+      {
+        type: "todo",
+        content: { items: ["Send proof sheet to client", "Review selections", "Process selects", "Deliver final files"] },
+        x: 730, y: 520, width: 280, height: 200,
       },
     ],
   },

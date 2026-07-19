@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { DndContext, useDraggable, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
@@ -14,6 +14,23 @@ type CardData = {
   width: number;
   height: number;
   zIndex: number;
+};
+
+type Template = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+};
+
+const TEMPLATE_ICONS: Record<string, React.ReactNode> = {
+  document: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>,
+  image: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" /></svg>,
+  camera: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" /></svg>,
+  calendar: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>,
+  film: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m0 0V5.625c0-.621.504-1.125 1.125-1.125h7.5c.621 0 1.125.504 1.125 1.125v12.75c0 .621-.504 1.125-1.125 1.125" /></svg>,
+  pin: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>,
+  style: <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" /></svg>,
 };
 
 function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: string) => void }) {
@@ -111,19 +128,80 @@ function DraggableCard({ card, onDelete }: { card: CardData; onDelete: (id: stri
   );
 }
 
+function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId: string) => void; onClose: () => void; boardId: string }) {
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [applying, setApplying] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/templates").then((r) => r.json()).then((d) => setTemplates(d.templates || []));
+  }, []);
+
+  async function applyTemplate(t: Template) {
+    setApplying(t.id);
+    const res = await fetch("/api/templates/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ boardId, templateId: t.id }),
+    });
+    if (res.ok) {
+      onSelect(t.id);
+    }
+    setApplying(null);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+      <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-auto m-4" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b border-sage-200 dark:border-charcoal-700 flex items-center justify-between">
+          <div>
+            <h2 className="font-serif text-2xl text-clay-800 dark:text-clay-200">Board Templates</h2>
+            <p className="text-sm text-charcoal-500 dark:text-charcoal-400 mt-1">Start with a pre-built layout or keep it blank</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-sage-100 dark:hover:bg-charcoal-800 text-charcoal-500 transition">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div className="p-6 grid gap-4 sm:grid-cols-2">
+          {templates.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => applyTemplate(t)}
+              disabled={applying === t.id}
+              className="text-left p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 hover:border-sage-400 dark:hover:border-sage-600 bg-bone-50 dark:bg-charcoal-800 transition group disabled:opacity-50"
+            >
+              <div className="w-10 h-10 rounded-lg bg-clay-100 dark:bg-clay-900/30 flex items-center justify-center text-clay-600 dark:text-clay-400 mb-3 group-hover:scale-105 transition">
+                {TEMPLATE_ICONS[t.icon] || TEMPLATE_ICONS.document}
+              </div>
+              <h3 className="font-medium text-charcoal-900 dark:text-bone-100 text-sm">{t.name}</h3>
+              <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-1">{t.description}</p>
+              {applying === t.id && <p className="text-xs text-sage-600 mt-2">Applying...</p>}
+            </button>
+          ))}
+          <button
+            onClick={onClose}
+            className="text-left p-4 rounded-xl border-2 border-dashed border-sage-300 dark:border-charcoal-600 hover:border-sage-400 dark:hover:border-sage-500 bg-transparent transition group"
+          >
+            <div className="w-10 h-10 rounded-lg bg-bone-200 dark:bg-charcoal-700 flex items-center justify-center text-charcoal-400 mb-3">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+            </div>
+            <h3 className="font-medium text-charcoal-700 dark:text-bone-300 text-sm">Blank Board</h3>
+            <p className="text-xs text-charcoal-400 mt-1">Start with an empty canvas</p>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BoardPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [board, setBoard] = useState<any>(null);
   const [cards, setCards] = useState<CardData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
-  const [noteText, setNoteText] = useState("");
-  const [headingText, setHeadingText] = useState("");
   const [colorValue, setColorValue] = useState("#e8dfd3");
-  const [todoItems, setTodoItems] = useState("");
-  const [linkUrl, setLinkUrl] = useState("");
-  const [linkLabel, setLinkLabel] = useState("");
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -208,11 +286,28 @@ export default function BoardPage() {
     }
   }
 
-  if (loading) return <div className="text-center py-12 text-charcoal-400">Loading board...</div>;
+  function handleTemplateApplied(templateId: string) {
+    setShowTemplates(false);
+    fetch(`/api/boards/${id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.board) setCards(data.board.cards || []);
+      });
+  }
+
+  if (loading) return <div className="h-screen flex items-center justify-center text-charcoal-400">Loading board...</div>;
   if (!board) return null;
 
   return (
     <div className="h-screen flex flex-col">
+      {showTemplates && (
+        <TemplatePicker
+          boardId={id as string}
+          onSelect={handleTemplateApplied}
+          onClose={() => setShowTemplates(false)}
+        />
+      )}
+
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-sage-200 dark:border-charcoal-700 bg-white/80 dark:bg-charcoal-950/80 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-3">
           <Link href={`/projects/${board.project?.id}`} className="text-sm text-sage-600 dark:text-sage-400 hover:underline">&larr;</Link>
@@ -224,76 +319,110 @@ export default function BoardPage() {
           )}
         </div>
 
-        <div className="relative">
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setAddMenuOpen(!addMenuOpen)}
-            className="px-4 py-1.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition flex items-center gap-1.5"
+            onClick={() => setShowTemplates(true)}
+            className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1.5"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-            Add Card
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            Templates
           </button>
 
-          {addMenuOpen && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-charcoal-900 rounded-xl border border-sage-200 dark:border-charcoal-700 shadow-xl z-50 p-3 space-y-2">
-              <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 cursor-pointer transition">
-                <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                </div>
-                <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Image</span>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
-              </label>
+          <div className="relative">
+            <button
+              onClick={() => setAddMenuOpen(!addMenuOpen)}
+              className="px-4 py-1.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition flex items-center gap-1.5"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Add Card
+            </button>
 
-              <button onClick={() => { setNoteText(""); addCard("note", { text: "" }); }} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                <div className="w-8 h-8 rounded-lg bg-bone-200 dark:bg-charcoal-800 flex items-center justify-center text-clay-600">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                </div>
-                <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Note</span>
-              </button>
+            {addMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-charcoal-900 rounded-xl border border-sage-200 dark:border-charcoal-700 shadow-xl z-50 p-3 space-y-2">
+                <label className="flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 cursor-pointer transition">
+                  <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                  </div>
+                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Image</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                </label>
 
-              <button onClick={() => addCard("heading", { text: "New Heading" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
-                </div>
-                <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Heading</span>
-              </button>
+                <button onClick={() => addCard("note", { text: "" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
+                  <div className="w-8 h-8 rounded-lg bg-bone-200 dark:bg-charcoal-800 flex items-center justify-center text-clay-600">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  </div>
+                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Note</span>
+                </button>
 
-              <button onClick={() => addCard("color", { color: colorValue })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                <div className="w-8 h-8 rounded-lg border border-sage-200 dark:border-charcoal-700" style={{ backgroundColor: colorValue }} />
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Color</span>
-                  <input type="color" value={colorValue} onChange={(e) => setColorValue(e.target.value)} className="w-6 h-6 rounded cursor-pointer" onClick={(e) => e.stopPropagation()} />
-                </div>
-              </button>
+                <button onClick={() => addCard("heading", { text: "New Heading" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
+                  <div className="w-8 h-8 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                  </div>
+                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Heading</span>
+                </button>
 
-              <button onClick={() => addCard("todo", { items: [] })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                <div className="w-8 h-8 rounded-lg bg-clay-100 dark:bg-clay-900/30 flex items-center justify-center text-clay-600">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                </div>
-                <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">To-Do</span>
-              </button>
+                <button onClick={() => addCard("color", { color: colorValue })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
+                  <div className="w-8 h-8 rounded-lg border border-sage-200 dark:border-charcoal-700" style={{ backgroundColor: colorValue }} />
+                  <div className="flex-1 flex items-center gap-2">
+                    <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Color</span>
+                    <input type="color" value={colorValue} onChange={(e) => setColorValue(e.target.value)} className="w-6 h-6 rounded cursor-pointer" onClick={(e) => e.stopPropagation()} />
+                  </div>
+                </button>
 
-              <button onClick={() => addCard("link", { url: "", label: "" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
-                <div className="w-8 h-8 rounded-lg bg-charcoal-100 dark:bg-charcoal-800 flex items-center justify-center text-charcoal-600">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                </div>
-                <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Link</span>
-              </button>
-            </div>
-          )}
+                <button onClick={() => addCard("todo", { items: [] })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
+                  <div className="w-8 h-8 rounded-lg bg-clay-100 dark:bg-clay-900/30 flex items-center justify-center text-clay-600">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                  </div>
+                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">To-Do</span>
+                </button>
+
+                <button onClick={() => addCard("link", { url: "", label: "" })} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-bone-100 dark:hover:bg-charcoal-800 transition">
+                  <div className="w-8 h-8 rounded-lg bg-charcoal-100 dark:bg-charcoal-800 flex items-center justify-center text-charcoal-600">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                  </div>
+                  <span className="text-sm font-medium text-charcoal-700 dark:text-charcoal-300">Link</span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
       <div ref={canvasRef} className="flex-1 overflow-auto bg-bone-50 dark:bg-charcoal-950">
-        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-          <div
-            className="board-canvas relative min-w-[200%] min-h-[200%] w-[4000px] h-[4000px]"
-            onClick={() => setAddMenuOpen(false)}
-          >
-            {cards.map((card) => (
-              <DraggableCard key={card.id} card={card} onDelete={deleteCard} />
-            ))}
+        {cards.length === 0 && !showTemplates ? (
+          <div className="h-full flex flex-col items-center justify-center text-center px-4">
+            <div className="w-20 h-20 rounded-2xl bg-bone-200 dark:bg-charcoal-800 flex items-center justify-center mb-6">
+              <svg className="w-10 h-10 text-clay-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            </div>
+            <h2 className="font-serif text-2xl text-clay-800 dark:text-clay-200 mb-2">This board is empty</h2>
+            <p className="text-charcoal-500 dark:text-charcoal-400 text-sm mb-8 max-w-sm">Start with a template or add cards one at a time.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowTemplates(true)}
+                className="px-5 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white font-medium transition"
+              >
+                Browse Templates
+              </button>
+              <button
+                onClick={() => setAddMenuOpen(true)}
+                className="px-5 py-2.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-700 dark:text-charcoal-300 font-medium hover:bg-sage-50 dark:hover:bg-charcoal-800 transition"
+              >
+                Add Card
+              </button>
+            </div>
           </div>
-        </DndContext>
+        ) : (
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <div
+              className="board-canvas relative min-w-[200%] min-h-[200%] w-[4000px] h-[4000px]"
+              onClick={() => setAddMenuOpen(false)}
+            >
+              {cards.map((card) => (
+                <DraggableCard key={card.id} card={card} onDelete={deleteCard} />
+              ))}
+            </div>
+          </DndContext>
+        )}
       </div>
     </div>
   );

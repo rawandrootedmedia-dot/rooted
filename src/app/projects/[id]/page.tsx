@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
+type BoardItem = { id: string; title: string; _count: { cards: number } };
+
 type ProjectData = {
   id: string;
   title: string;
@@ -12,7 +14,7 @@ type ProjectData = {
   shootDate: string | null;
   brief: string | null;
   client: { id: string; name: string };
-  boards: { id: string; title: string; _count: { cards: number } }[];
+  boards: BoardItem[];
   shots: { id: string; label: string; status: string; shotType: string | null; order: number }[];
   callSheets: { id: string; date: string; location: string | null }[];
 };
@@ -23,6 +25,12 @@ export default function ProjectDetail() {
   const [project, setProject] = useState<ProjectData | null>(null);
   const [loading, setLoading] = useState(true);
   const [newBoardTitle, setNewBoardTitle] = useState("");
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
+  const [templates, setTemplates] = useState<{id:string;name:string;description:string;icon:string}[]>([]);
+
+  useEffect(() => {
+    fetch("/api/templates").then(r => r.json()).then(d => setTemplates(d.templates || []));
+  }, []);
 
   useEffect(() => {
     fetch(`/api/projects/${id}`)
@@ -48,6 +56,26 @@ export default function ProjectDetail() {
     }
   }
 
+  async function addBoardWithTemplate(templateId: string) {
+    const tpl = templates.find(t => t.id === templateId);
+    const res = await fetch("/api/boards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: tpl?.name || "New Board", projectId: id }),
+    });
+    if (!res.ok) return;
+    const { board: newBoard } = await res.json();
+
+    await fetch("/api/templates/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ boardId: newBoard.id, templateId }),
+    });
+
+    setProject((p) => p ? { ...p, boards: [...p.boards, { ...newBoard, _count: { cards: 0 } }] } : p);
+    setShowTemplatePicker(false);
+  }
+
   const statusColors: Record<string, string> = {
     idea: "bg-bone-200 text-clay-700 dark:bg-charcoal-800 dark:text-bone-300",
     booked: "bg-sage-100 text-sage-700 dark:bg-sage-900/30 dark:text-sage-300",
@@ -63,6 +91,28 @@ export default function ProjectDetail() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      {showTemplatePicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowTemplatePicker(false)}>
+          <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-auto m-4" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-sage-200 dark:border-charcoal-700 flex items-center justify-between">
+              <h2 className="font-serif text-2xl text-clay-800 dark:text-clay-200">New Board from Template</h2>
+              <button onClick={() => setShowTemplatePicker(false)} className="p-2 rounded-lg hover:bg-sage-100 dark:hover:bg-charcoal-800 text-charcoal-500 transition">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 grid gap-4 sm:grid-cols-2">
+              {templates.map((t) => (
+                <button key={t.id} onClick={() => addBoardWithTemplate(t.id)}
+                  className="text-left p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 hover:border-sage-400 dark:hover:border-sage-600 bg-bone-50 dark:bg-charcoal-800 transition group">
+                  <h3 className="font-medium text-charcoal-900 dark:text-bone-100 text-sm">{t.name}</h3>
+                  <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-1">{t.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    
       <Link href="/dashboard" className="text-sm text-sage-600 dark:text-sage-400 hover:underline mb-4 inline-block">&larr; Dashboard</Link>
 
       <div className="flex items-start justify-between mb-6">
@@ -95,11 +145,15 @@ export default function ProjectDetail() {
             <input
               value={newBoardTitle}
               onChange={(e) => setNewBoardTitle(e.target.value)}
-              placeholder="New board name..."
-              className="px-3 py-1.5 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-2 focus:ring-sage-400 w-40"
+              placeholder="Board name..."
+              className="px-3 py-1.5 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-2 focus:ring-sage-400 w-36"
               onKeyDown={(e) => e.key === "Enter" && addBoard()}
             />
             <button onClick={addBoard} className="px-3 py-1.5 rounded-lg bg-sage-600 hover:bg-sage-700 text-white text-sm font-medium transition">Add</button>
+            <button onClick={() => setShowTemplatePicker(!showTemplatePicker)} className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1">
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+              Template
+            </button>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

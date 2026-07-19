@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  role      String   @default("member")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  clients   Client[]
+  projects  Project[]
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  contactInfo String?
+  notes       String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  projects    Project[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Project {
+  id        String      @id @default(cuid())
+  title     String
+  type      String      @default("photo")
+  status    String      @default("idea")
+  shootDate DateTime?
+  brief     String?
+  clientId  String
+  client    Client      @relation(fields: [clientId], references: [id])
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  boards    Board[]
+  shots     Shot[]
+  callSheets CallSheet[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  title     String
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  cards     Card[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Card {
+  id        String   @id @default(cuid())
+  type      String
+  content   Json?
+  x         Float    @default(0)
+  y         Float    @default(0)
+  width     Float    @default(260)
+  height    Float    @default(200)
+  zIndex    Int      @default(0)
+  boardId   String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Shot {
+  id          String   @id @default(cuid())
+  label       String
+  description String?
+  shotType    String?
+  camera      String?
+  lens        String?
+  status      String   @default("planned")
+  order       Int      @default(0)
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model CallSheet {
+  id        String   @id @default(cuid())
+  date      DateTime
+  location  String?
+  address   String?
+  callTime  String?
+  schedule  Json?
+  crew      Json?
+  notes     String?
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

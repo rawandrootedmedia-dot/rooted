@@ -228,6 +228,39 @@ function EditableLink({ card, editing, onStartEdit, onSave }: EditableCardProps)
   );
 }
 
+function EditableColumn({ card, editing, onStartEdit, onSave }: EditableCardProps) {
+  const [val, setVal] = useState(card.content?.text || "");
+  useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
+  if (editing) return (
+    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "transparent", border: "1px dashed var(--green)" }}>
+      <div className="mcard-head" style={{ borderBottom: "1px dashed var(--border)" }}>
+        <span>column</span>
+        <span style={{ color: "var(--green)" }}>editing</span>
+      </div>
+      <input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={() => onSave({ text: val })}
+        onKeyDown={(e) => { if (e.key === "Enter") onSave({ text: val }); if (e.key === "Escape") onSave({ text: val }); }}
+        className="w-full px-3 py-2 font-display text-base focus:outline-none bg-transparent"
+        style={{ color: "var(--text-primary)" }}
+        autoFocus
+        placeholder="Column title..."
+      />
+    </div>
+  );
+  return (
+    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-lg overflow-hidden cursor-text" style={{ background: "transparent", border: "1px dashed var(--border)" }}>
+      <div className="mcard-head" style={{ borderBottom: "1px dashed var(--border)" }}>
+        <span>column</span>
+      </div>
+      <div className="px-3 py-2 flex-1">
+        <h3 className="font-display text-base" style={{ color: "var(--text-primary)" }}>{card.content?.text || <span style={{ color: "var(--text-secondary)" }} className="italic">Click to title...</span>}</h3>
+      </div>
+    </div>
+  );
+}
+
 function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
   card: CardData;
   onDelete: (id: string) => void;
@@ -298,6 +331,8 @@ function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
         return <EditableTodo card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
       case "link":
         return <EditableLink card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+      case "column":
+        return <EditableColumn card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
       case "color":
         return (
           <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
@@ -452,6 +487,7 @@ const TOOLBAR_ITEMS = [
   { type: "color", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Color" },
   { type: "image", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Image" },
   { type: "video", icon: "M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM15.75 16.5a12.015 12.015 0 00-7.5 0m11.25-1.5a12.015 12.015 0 00-7.5-2.25m-7.5 9.75h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003.75 6v12a1.5 1.5 0 001.5 1.5z", label: "Video" },
+  { type: "column", icon: "M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm12 0a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z", label: "Column" },
 ];
 
 export default function BoardPage() {
@@ -572,8 +608,8 @@ export default function BoardPage() {
       cx = Math.max(0, canvas.scrollLeft + rect.width / 2 - 130);
       cy = Math.max(0, canvas.scrollTop + rect.height / 2 - 100);
     }
-    const w = type === "image" ? 320 : type === "video" ? 400 : type === "color" ? 200 : 260;
-    const h = type === "image" ? 320 : type === "video" ? 260 : type === "color" ? 200 : type === "heading" ? 80 : 200;
+    const w = type === "image" ? 320 : type === "video" ? 400 : type === "color" ? 200 : type === "column" ? 240 : 260;
+    const h = type === "image" ? 320 : type === "video" ? 260 : type === "color" ? 200 : type === "heading" ? 80 : type === "column" ? 480 : 200;
 
     const res = await fetch("/api/cards", {
       method: "POST",
@@ -632,6 +668,10 @@ export default function BoardPage() {
       createCard("color", { color: colorValue });
       return;
     }
+    if (type === "column") {
+      createCard("column", { text: "" }, undefined, undefined);
+      return;
+    }
     createCard(type, type === "note" ? { text: "" } : type === "heading" ? { text: "" } : type === "todo" ? { items: [] } : type === "link" ? { url: "", label: "" } : {});
   }
 
@@ -666,6 +706,10 @@ export default function BoardPage() {
     }
     if (type === "color") {
       createCard("color", { color: colorValue }, x, y);
+      return;
+    }
+    if (type === "column") {
+      createCard("column", { text: "" }, x, y);
       return;
     }
     createCard(type, type === "note" ? { text: "" } : type === "heading" ? { text: "" } : type === "todo" ? { items: [] } : type === "link" ? { url: "", label: "" } : {}, x, y);

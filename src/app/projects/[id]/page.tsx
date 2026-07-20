@@ -223,15 +223,15 @@ export default function ProjectDetail() {
             </button>
           </div>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {project.boards.map((board) => (
             <div key={board.id} className="relative group">
               <Link
                 href={`/boards/${board.id}`}
-                className="block p-6 rounded-xl border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-sage-300 dark:hover:border-charcoal-600 transition min-h-[140px] flex flex-col justify-end"
+                className="block p-4 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-sage-300 dark:hover:border-charcoal-600 transition min-h-[90px] flex flex-col justify-end"
               >
-                <h3 className="font-serif text-lg text-clay-800 dark:text-clay-200 group-hover:text-clay-700 dark:group-hover:text-clay-300 transition">{board.title}</h3>
-                <p className="text-xs text-charcoal-400 mt-1">{board._count.cards} card{board._count.cards !== 1 ? "s" : ""}</p>
+                <h3 className="font-serif text-sm text-clay-800 dark:text-clay-200 group-hover:text-clay-700 dark:group-hover:text-clay-300 transition">{board.title}</h3>
+                <p className="text-[10px] text-charcoal-400 mt-0.5">{board._count.cards} card{board._count.cards !== 1 ? "s" : ""}</p>
               </Link>
               <button
                 onClick={async (e) => {

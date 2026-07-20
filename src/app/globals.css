@@ -2,31 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@500;600;700&family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg-primary: #f4f1ea;
-  --bg-secondary: #ede8dd;
-  --text-primary: #21201c;
-  --text-secondary: #8c877a;
-  --accent: #d1392c;
-  --accent-soft: #fbe4e1;
-  --border: #e2ddd0;
-  --card-bg: #ffffff;
-  --card-shadow: 0 1px 2px rgba(33,32,28,0.05), 0 6px 16px rgba(33,32,28,0.06);
-  --card-shadow-hover: 0 2px 4px rgba(33,32,28,0.07), 0 8px 24px rgba(33,32,28,0.09);
+  --bg-primary: #f2ecdf;
+  --bg-secondary: #ebe4d5;
+  --text-primary: #26301f;
+  --text-secondary: #7c8267;
+  --accent: #a8562e;
+  --accent-soft: #f2ddc9;
+  --accent-hover: #8a4424;
+  --green: #3c4a2e;
+  --green-soft: #e2e6d8;
+  --border: #ddd4bd;
+  --card-bg: #fffdf8;
+  --card-shadow: 0 1px 2px rgba(43,40,34,0.06), 0 4px 14px rgba(43,40,34,0.06);
+  --card-shadow-hover: 0 2px 4px rgba(43,40,34,0.08), 0 8px 24px rgba(43,40,34,0.09);
 }
 
 .dark {
   --bg-primary: #1a1a1d;
   --bg-secondary: #222224;
-  --text-primary: #f4f1ea;
-  --text-secondary: #8c877a;
-  --accent: #e85d4a;
-  --accent-soft: rgba(232,93,74,0.12);
+  --text-primary: #f2ecdf;
+  --text-secondary: #a0a090;
+  --accent: #c47044;
+  --accent-soft: rgba(196,112,68,0.12);
+  --accent-hover: #d4845a;
+  --green: #5a6b47;
+  --green-soft: rgba(90,107,71,0.12);
   --border: #333230;
   --card-bg: #252527;
-  --card-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 6px 16px rgba(0,0,0,0.3);
+  --card-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 4px 14px rgba(0,0,0,0.3);
   --card-shadow-hover: 0 2px 4px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.35);
 }
 
@@ -36,24 +42,25 @@ body {
   font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* Board canvas — dot grid */
 .board-canvas {
   background-color: var(--bg-primary);
   background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
-  background-size: 20px 20px;
+  background-size: 22px 22px;
 }
 
-/* Milanote-style card base */
+/* Card base — physical index-card feel */
 .mcard {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   box-shadow: var(--card-shadow);
   transition: box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .mcard:hover {
   box-shadow: var(--card-shadow-hover);
-  border-color: #cfcfcf;
+  border-color: #c8bfa8;
 }
 
 .dark .mcard:hover {
@@ -65,16 +72,16 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 10px;
+  padding: 7px 10px;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 10px;
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
 }
 
-/* Tally accent dot */
+/* Accent dot */
 .rec-dot {
   width: 7px;
   height: 7px;
@@ -123,36 +130,52 @@ body {
   background: var(--accent);
 }
 
-/* Status dot colors */
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
+/* Connector lines between cards */
+.connector-line {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  opacity: 0.45;
 }
 
-/* Toolbar item style */
+/* Toolbar */
 .toolbar-btn {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border);
   background: var(--card-bg);
   box-shadow: var(--card-shadow);
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
   cursor: grab;
 }
 
 .toolbar-btn:hover {
   transform: scale(1.1);
   box-shadow: var(--card-shadow-hover);
+  border-color: var(--accent);
 }
 
 .toolbar-btn:active {
   cursor: grabbing;
+}
+
+/* Connect handle on cards */
+.connect-handle {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  border: 1px solid var(--accent);
+  cursor: crosshair;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.group:hover .connect-handle {
+  opacity: 1;
 }
 
 /* Subtle page transition */
@@ -164,3 +187,8 @@ body {
 .fade-in {
   animation: fadeIn 0.2s ease-out;
 }
+
+/* Status indicator */
+.status-pending { color: var(--text-secondary); }
+.status-approved { color: var(--green); }
+.status-rejected { color: var(--accent); }

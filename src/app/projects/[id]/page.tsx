@@ -31,7 +31,10 @@ export default function ProjectDetail() {
   const [templates, setTemplates] = useState<{id:string;name:string;description:string;icon:string}[]>([]);
 
   useEffect(() => {
-    fetch("/api/templates").then(r => r.json()).then(d => setTemplates(d.templates || []));
+    fetch("/api/templates").then(r => r.json()).then(d => {
+      const all = [...(d.builtIn || []), ...(d.custom || [])];
+      setTemplates(all);
+    });
   }, []);
 
   useEffect(() => {

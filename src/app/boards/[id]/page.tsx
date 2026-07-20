@@ -421,6 +421,11 @@ export default function BoardPage() {
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [shares, setShares] = useState<any[]>([]);
+  const [shareName, setShareName] = useState("");
+  const [shareEmail, setShareEmail] = useState("");
+  const [creatingShare, setCreatingShare] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -462,6 +467,35 @@ export default function BoardPage() {
       alert("Template saved!");
     }
     setSavingTemplate(false);
+  }
+
+  async function loadShares() {
+    const res = await fetch(`/api/boards/${id}/shares`);
+    if (res.ok) {
+      const data = await res.json();
+      setShares(data.shares || []);
+    }
+  }
+
+  async function createShare() {
+    setCreatingShare(true);
+    const res = await fetch(`/api/boards/${id}/share`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientName: shareName.trim() || undefined, clientEmail: shareEmail.trim() || undefined }),
+    });
+    if (res.ok) {
+      setShareName("");
+      setShareEmail("");
+      loadShares();
+    }
+    setCreatingShare(false);
+  }
+
+  async function revokeShare(shareId: string) {
+    if (!confirm("Revoke this share link?")) return;
+    await fetch(`/api/shares/${shareId}`, { method: "DELETE" });
+    setShares((prev) => prev.filter((s) => s.id !== shareId));
   }
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
@@ -639,6 +673,84 @@ export default function BoardPage() {
         </div>
       )}
 
+      {showShare && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowShare(false)}>
+          <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-lg m-4 max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-sage-200 dark:border-charcoal-700 flex items-center justify-between">
+              <div>
+                <h2 className="font-serif text-xl text-clay-800 dark:text-clay-200">Share with Client</h2>
+                <p className="text-sm text-charcoal-500 dark:text-charcoal-400 mt-1">Generate a link for client approval</p>
+              </div>
+              <button onClick={() => setShowShare(false)} className="p-2 rounded-lg hover:bg-sage-100 dark:hover:bg-charcoal-800 text-charcoal-500 transition">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <input
+                  value={shareName}
+                  onChange={(e) => setShareName(e.target.value)}
+                  placeholder="Client name (optional)"
+                  className="px-3 py-2 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400"
+                />
+                <input
+                  value={shareEmail}
+                  onChange={(e) => setShareEmail(e.target.value)}
+                  placeholder="Client email (optional)"
+                  className="px-3 py-2 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400"
+                />
+              </div>
+              <button
+                onClick={createShare}
+                disabled={creatingShare}
+                className="w-full px-4 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition disabled:opacity-50"
+              >
+                {creatingShare ? "Creating..." : "Generate Share Link"}
+              </button>
+
+              {shares.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-charcoal-600 dark:text-charcoal-400 mb-3">Shared Links</h3>
+                  <div className="space-y-2">
+                    {shares.map((share) => {
+                      const url = `${typeof window !== "undefined" ? window.location.origin : ""}/share/${share.token}`;
+                      const latestReview = share.reviews?.[0];
+                      return (
+                        <div key={share.id} className="p-3 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800">
+                          <div className="flex items-center justify-between mb-2">
+                            <div>
+                              {share.clientName && <span className="text-sm font-medium text-charcoal-900 dark:text-bone-100">{share.clientName}</span>}
+                              {share.clientEmail && <span className="text-xs text-charcoal-400 ml-2">{share.clientEmail}</span>}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {share.status !== "pending" && (
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${share.status === "approved" ? "bg-sage-100 text-sage-700 dark:bg-sage-900/30 dark:text-sage-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
+                                  {share.status}
+                                </span>
+                              )}
+                              <button onClick={() => revokeShare(share.id)} className="text-charcoal-400 hover:text-red-500 transition" title="Revoke">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                              </button>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input readOnly value={url} className="flex-1 px-2 py-1 text-xs rounded bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 text-charcoal-500 font-mono" />
+                            <button onClick={() => { navigator.clipboard.writeText(url); }} className="px-2 py-1 text-xs rounded bg-sage-100 dark:bg-sage-900/30 text-sage-700 dark:text-sage-400 hover:bg-sage-200 dark:hover:bg-sage-900/50 transition">Copy</button>
+                          </div>
+                          {latestReview?.comment && (
+                            <p className="text-xs text-charcoal-400 mt-2 italic">&quot;{latestReview.comment}&quot;</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-sage-200 dark:border-charcoal-700 bg-white/80 dark:bg-charcoal-950/80 backdrop-blur-sm flex-shrink-0">
         <div className="flex items-center gap-3">
           <Link href={`/projects/${board.project?.id}`} className="text-sm text-sage-600 dark:text-sage-400 hover:underline">&larr;</Link>
@@ -675,6 +787,13 @@ export default function BoardPage() {
               Save as Template
             </button>
           )}
+          <button
+            onClick={() => { setShowShare(true); loadShares(); }}
+            className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1.5"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+            Share
+          </button>
           <button
             onClick={() => setShowTemplates(true)}
             className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1.5"

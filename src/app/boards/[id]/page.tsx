@@ -14,6 +14,7 @@ type CardData = {
   width: number;
   height: number;
   zIndex: number;
+  parentId: string | null;
 };
 
 type Template = {
@@ -261,8 +262,9 @@ function EditableColumn({ card, editing, onStartEdit, onSave }: EditableCardProp
   );
 }
 
-function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
+function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSave }: {
   card: CardData;
+  allCards: CardData[];
   onDelete: (id: string) => void;
   editingId: string | null;
   onStartEdit: (id: string) => void;
@@ -270,10 +272,14 @@ function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: card.id });
 
+  const parent = card.parentId ? allCards.find((c) => c.id === card.parentId) : null;
+  const renderX = parent ? parent.x + card.x : card.x;
+  const renderY = parent ? parent.y + card.y : card.y;
+
   const style: React.CSSProperties = {
     position: "absolute",
-    left: card.x,
-    top: card.y,
+    left: renderX,
+    top: renderY,
     width: card.width,
     height: card.height,
     zIndex: editingId === card.id ? 999 : card.zIndex,
@@ -584,16 +590,63 @@ export default function BoardPage() {
   }
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    const cardId = event.active.id;
+    const cardId = event.active.id as string;
     const delta = event.delta || { x: 0, y: 0 };
     const card = cards.find((c) => c.id === cardId);
     if (!card) return;
 
-    const newX = Math.max(0, card.x + delta.x);
-    const newY = Math.max(0, card.y + delta.y);
+    const updates: { id: string; x: number; y: number; parentId?: string | null }[] = [];
 
-    setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, x: newX, y: newY } : c)));
-    await updateCard(cardId as string, { x: newX, y: newY });
+    if (card.type === "column") {
+      const parent = card.parentId ? cards.find((c) => c.id === card.parentId) : null;
+      const curAbsX = parent ? parent.x + card.x : card.x;
+      const curAbsY = parent ? parent.y + card.y : card.y;
+      const newAbsX = Math.max(0, curAbsX + delta.x);
+      const newAbsY = Math.max(0, curAbsY + delta.y);
+      const dx = newAbsX - curAbsX;
+      const dy = newAbsY - curAbsY;
+      setCards((prev) => prev.map((c) => {
+        if (c.id === cardId) return { ...c, x: parent ? newAbsX - parent.x : newAbsX, y: parent ? newAbsY - parent.y : newAbsY };
+        if (c.parentId === cardId) {
+          const childNewX = Math.max(0, c.x + dx);
+          const childNewY = Math.max(0, c.y + dy);
+          updates.push({ id: c.id, x: childNewX, y: childNewY });
+          return { ...c, x: childNewX, y: childNewY };
+        }
+        return c;
+      }));
+      updates.push({ id: cardId, x: parent ? newAbsX - parent.x : newAbsX, y: parent ? newAbsY - parent.y : newAbsY });
+    } else {
+      const curParent = card.parentId ? cards.find((c) => c.id === card.parentId) : null;
+      const curAbsX = curParent ? curParent.x + card.x : card.x;
+      const curAbsY = curParent ? curParent.y + card.y : card.y;
+      const newAbsX = Math.max(0, curAbsX + delta.x);
+      const newAbsY = Math.max(0, curAbsY + delta.y);
+
+      let targetColumnId: string | null = null;
+      for (const c of cards) {
+        if (c.type !== "column" || c.id === cardId) continue;
+        if (newAbsX >= c.x && newAbsX <= c.x + c.width && newAbsY >= c.y && newAbsY <= c.y + c.height) {
+          targetColumnId = c.id;
+          break;
+        }
+      }
+
+      let storeX = newAbsX;
+      let storeY = newAbsY;
+      if (targetColumnId) {
+        const col = cards.find((c) => c.id === targetColumnId)!;
+        storeX = newAbsX - col.x;
+        storeY = newAbsY - col.y;
+      }
+
+      setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, x: storeX, y: storeY, parentId: targetColumnId } : c)));
+      updates.push({ id: cardId, x: storeX, y: storeY, parentId: targetColumnId });
+    }
+
+    for (const u of updates) {
+      await updateCard(u.id, { x: u.x, y: u.y, ...(u.parentId !== undefined ? { parentId: u.parentId } : {}) });
+    }
   }, [cards, updateCard]);
 
   async function createCard(type: string, content: any, x?: number, y?: number) {
@@ -947,6 +1000,7 @@ export default function BoardPage() {
                   <DraggableCard
                     key={card.id}
                     card={card}
+                    allCards={cards}
                     onDelete={deleteCard}
                     editingId={editingId}
                     onStartEdit={setEditingId}

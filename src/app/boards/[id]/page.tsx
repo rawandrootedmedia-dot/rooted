@@ -80,18 +80,30 @@ function EditableNote({ card, editing, onStartEdit, onSave }: EditableCardProps)
   const [val, setVal] = useState(card.content?.text || "");
   useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
   if (editing) return (
-    <textarea
-      value={val}
-      onChange={(e) => setVal(e.target.value)}
-      onBlur={() => onSave({ text: val })}
-      onKeyDown={(e) => { if (e.key === "Escape") onSave({ text: val }); }}
-      className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-2 border-sage-400 dark:border-sage-600 resize-none text-sm text-charcoal-700 dark:text-charcoal-300 focus:outline-none"
-      autoFocus
-    />
+    <div className="w-full h-full flex flex-col rounded-md overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)" }}>
+      <div className="mcard-head">
+        <span>note</span>
+        <span className="text-tally">editing</span>
+      </div>
+      <textarea
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={() => onSave({ text: val })}
+        onKeyDown={(e) => { if (e.key === "Escape") onSave({ text: val }); }}
+        className="flex-1 p-3 resize-none text-sm focus:outline-none"
+        style={{ color: "var(--text-primary)", background: "transparent" }}
+        autoFocus
+      />
+    </div>
   );
   return (
-    <div onClick={onStartEdit} className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 overflow-auto cursor-text group-hover:border-sage-300 dark:group-hover:border-charcoal-600 transition">
-      <p className="text-sm text-charcoal-700 dark:text-charcoal-300 whitespace-pre-wrap">{card.content?.text || <span className="text-charcoal-300 dark:text-charcoal-500 italic">Click to type...</span>}</p>
+    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-md overflow-hidden cursor-text" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
+      <div className="mcard-head">
+        <span>note</span>
+      </div>
+      <div className="p-3 flex-1 overflow-auto">
+        <p className="text-sm" style={{ color: "var(--text-primary)", lineHeight: 1.55 }}>{card.content?.text || <span style={{ color: "var(--text-secondary)" }} className="italic">Click to type...</span>}</p>
+      </div>
     </div>
   );
 }
@@ -100,18 +112,23 @@ function EditableHeading({ card, editing, onStartEdit, onSave }: EditableCardPro
   const [val, setVal] = useState(card.content?.text || "");
   useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
   if (editing) return (
-    <input
-      value={val}
-      onChange={(e) => setVal(e.target.value)}
-      onBlur={() => onSave({ text: val })}
-      onKeyDown={(e) => { if (e.key === "Enter") onSave({ text: val }); if (e.key === "Escape") onSave({ text: val }); }}
-      className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-2 border-sage-400 dark:border-sage-600 font-serif text-lg text-clay-800 dark:text-clay-200 focus:outline-none"
-      autoFocus
-    />
+    <div className="w-full h-full flex flex-col rounded-md overflow-hidden" style={{ background: "var(--card-bg)", borderLeft: "3px solid var(--accent)" }}>
+      <input
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        onBlur={() => onSave({ text: val })}
+        onKeyDown={(e) => { if (e.key === "Enter") onSave({ text: val }); if (e.key === "Escape") onSave({ text: val }); }}
+        className="w-full h-full px-4 py-3 font-display text-lg focus:outline-none"
+        style={{ color: "var(--text-primary)", background: "transparent", borderLeft: "none" }}
+        autoFocus
+      />
+    </div>
   );
   return (
-    <div onClick={onStartEdit} className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-l-4 border-clay-400 cursor-text group-hover:border-l-clay-500 transition">
-      <h3 className="font-serif text-lg text-clay-800 dark:text-clay-200">{card.content?.text || <span className="text-charcoal-300 dark:text-charcoal-500 italic">Click to type...</span>}</h3>
+    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-md overflow-hidden cursor-text" style={{ background: "var(--card-bg)", borderLeft: "3px solid var(--accent)", boxShadow: "var(--card-shadow)" }}>
+      <div className="px-4 py-3 flex items-center">
+        <h3 className="font-display text-lg" style={{ color: "var(--text-primary)" }}>{card.content?.text || <span style={{ color: "var(--text-secondary)" }} className="italic">Click to type...</span>}</h3>
+      </div>
     </div>
   );
 }
@@ -129,12 +146,15 @@ function EditableTodo({ card, editing, onStartEdit, onSave }: EditableCardProps)
   }
 
   if (editing) return (
-    <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-2 border-sage-400 dark:border-sage-600 overflow-auto" onBlur={commit}>
-      <p className="text-xs font-medium text-charcoal-500 dark:text-charcoal-400 uppercase tracking-wider mb-2">To-Do</p>
-      <div className="space-y-1.5">
+    <div className="w-full h-full flex flex-col rounded-md overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--accent)" }} onBlur={commit}>
+      <div className="mcard-head">
+        <span>to-do</span>
+        <span className="text-tally">{localItems.filter(Boolean).length} items</span>
+      </div>
+      <div className="p-3 flex-1 overflow-auto space-y-1.5">
         {localItems.map((item, i) => (
           <div key={i} className="flex items-center gap-2">
-            <span className="text-charcoal-300 dark:text-charcoal-600 text-sm">&#9744;</span>
+            <span style={{ color: "var(--text-secondary)" }} className="text-sm">&#9744;</span>
             <input
               value={item}
               onChange={(e) => {
@@ -146,7 +166,8 @@ function EditableTodo({ card, editing, onStartEdit, onSave }: EditableCardProps)
               onBlur={commit}
               onKeyDown={(e) => { if (e.key === "Escape") commit(); }}
               placeholder={i === localItems.length - 1 ? "Add item..." : ""}
-              className="flex-1 bg-transparent border-none text-sm text-charcoal-700 dark:text-charcoal-300 focus:outline-none placeholder:text-charcoal-300 dark:placeholder:text-charcoal-600"
+              className="flex-1 bg-transparent border-none text-sm focus:outline-none"
+              style={{ color: "var(--text-primary)" }}
               autoFocus={i === 0}
             />
           </div>
@@ -155,20 +176,25 @@ function EditableTodo({ card, editing, onStartEdit, onSave }: EditableCardProps)
     </div>
   );
   return (
-    <div onClick={onStartEdit} className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 overflow-auto cursor-text group-hover:border-sage-300 dark:group-hover:border-charcoal-600 transition">
-      <p className="text-xs font-medium text-charcoal-500 dark:text-charcoal-400 uppercase tracking-wider mb-2">To-Do</p>
-      {items.length > 0 ? (
-        <ul className="space-y-1.5">
-          {items.map((item, i) => (
-            <li key={i} className="flex items-start gap-2">
-              <span className="mt-0.5 text-charcoal-300 dark:text-charcoal-600 text-sm select-none">&#9744;</span>
-              <span className="text-sm text-charcoal-700 dark:text-charcoal-300">{item}</span>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="text-sm text-charcoal-400 italic">Click to add items...</p>
-      )}
+    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-md overflow-hidden cursor-text" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
+      <div className="mcard-head">
+        <span>to-do</span>
+        {items.length > 0 && <span>{items.length} items</span>}
+      </div>
+      <div className="p-3 flex-1 overflow-auto">
+        {items.length > 0 ? (
+          <ul className="space-y-1.5">
+            {items.map((item, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="mt-0.5 text-sm" style={{ color: "var(--text-secondary)" }}>&#9744;</span>
+                <span className="text-sm" style={{ color: "var(--text-primary)" }}>{item}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Click to add items...</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -178,17 +204,26 @@ function EditableLink({ card, editing, onStartEdit, onSave }: EditableCardProps)
   const [url, setUrl] = useState(card.content?.url || "");
   useEffect(() => { setLabel(card.content?.label || ""); setUrl(card.content?.url || ""); }, [card.content?.label, card.content?.url]);
   if (editing) return (
-    <div className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border-2 border-sage-400 dark:border-sage-600 flex flex-col justify-center gap-2" onBlur={() => onSave({ label, url })}>
-      <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label" className="px-2 py-1 text-sm rounded border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none" autoFocus />
-      <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className="px-2 py-1 text-sm rounded border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none" onKeyDown={(e) => { if (e.key === "Enter") onSave({ label, url }); }} />
+    <div className="w-full h-full flex flex-col rounded-md overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--accent)" }} onBlur={() => onSave({ label, url })}>
+      <div className="mcard-head">
+        <span>link</span>
+      </div>
+      <div className="p-3 flex flex-col justify-center gap-2">
+        <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Label" className="px-2 py-1 text-sm rounded border focus:outline-none" style={{ borderColor: "var(--border)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} autoFocus />
+        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://..." className="px-2 py-1 text-sm rounded border focus:outline-none" style={{ borderColor: "var(--border)", background: "var(--bg-secondary)", color: "var(--text-primary)" }} onKeyDown={(e) => { if (e.key === "Enter") onSave({ label, url }); }} />
+      </div>
     </div>
   );
   return (
-    <div onClick={onStartEdit} className="w-full h-full p-4 rounded-xl bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 flex flex-col justify-center overflow-hidden cursor-text group-hover:border-sage-300 dark:group-hover:border-charcoal-600 transition">
-      <p className="text-xs text-charcoal-400 mb-1 truncate">Link</p>
-      <a href={card.content?.url || "#"} target="_blank" rel="noopener noreferrer" className="text-sm text-sage-600 dark:text-sage-400 hover:underline truncate" onClick={(e) => e.stopPropagation()}>
-        {card.content?.label || card.content?.url || <span className="text-charcoal-300 dark:text-charcoal-500 italic">Click to add...</span>}
-      </a>
+    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-md overflow-hidden cursor-text" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
+      <div className="mcard-head">
+        <span>link</span>
+      </div>
+      <div className="p-3 flex flex-col justify-center overflow-hidden">
+        <a href={card.content?.url || "#"} target="_blank" rel="noopener noreferrer" className="text-sm hover:underline truncate" style={{ color: "var(--accent)" }} onClick={(e) => e.stopPropagation()}>
+          {card.content?.label || card.content?.url || <span style={{ color: "var(--text-secondary)" }} className="italic">Click to add...</span>}
+        </a>
+      </div>
     </div>
   );
 }
@@ -219,30 +254,40 @@ function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
     switch (card.type) {
       case "image":
         return (
-          <div className="w-full h-full rounded-xl overflow-hidden bg-bone-100 dark:bg-charcoal-800">
-            {card.content?.url ? (
-              <SignedImg s3Key={card.content.url} alt={card.content.name || "Uploaded image"} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-charcoal-400 text-xs">No image</div>
-            )}
+          <div className="w-full h-full flex flex-col rounded-md overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
+            <div className="mcard-head">
+              <span><span className="rec-dot"></span>image</span>
+            </div>
+            <div className="flex-1 relative" style={{ background: "linear-gradient(135deg,#d9d2c2,#efe9db)" }}>
+              {card.content?.url ? (
+                <SignedImg s3Key={card.content.url} alt={card.content.name || "Uploaded image"} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>No image</div>
+              )}
+            </div>
           </div>
         );
       case "video":
         return (
-          <div className="w-full h-full rounded-xl overflow-hidden bg-black">
-            {card.content?.embedUrl ? (
-              <iframe
-                src={card.content.embedUrl}
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                loading="lazy"
-              />
-            ) : card.content?.url ? (
-              <video src={card.content.url} className="w-full h-full object-contain" controls playsInline preload="metadata" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-charcoal-400 text-xs">No video</div>
-            )}
+          <div className="w-full h-full flex flex-col rounded-md overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
+            <div className="mcard-head">
+              <span><span className="rec-dot"></span>video</span>
+            </div>
+            <div className="flex-1 bg-black relative">
+              {card.content?.embedUrl ? (
+                <iframe
+                  src={card.content.embedUrl}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              ) : card.content?.url ? (
+                <video src={card.content.url} className="w-full h-full object-contain" controls playsInline preload="metadata" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>No video</div>
+              )}
+            </div>
           </div>
         );
       case "note":
@@ -255,15 +300,16 @@ function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
         return <EditableLink card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
       case "color":
         return (
-          <div className="w-full h-full rounded-xl overflow-hidden border border-sage-200 dark:border-charcoal-700">
-            <div className="h-3/4" style={{ backgroundColor: card.content?.color || "#e8dfd3" }} />
-            <div className="h-1/4 bg-white dark:bg-charcoal-900 flex items-center px-4">
-              <span className="text-xs font-mono text-charcoal-600 dark:text-charcoal-400">{card.content?.color || "#e8dfd3"}</span>
+          <div className="w-full h-full flex flex-col rounded-md overflow-hidden" style={{ border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
+            <div className="mcard-head">
+              <span>color</span>
+              <span className="font-mono">{card.content?.color || "#e8dfd3"}</span>
             </div>
+            <div className="flex-1" style={{ backgroundColor: card.content?.color || "#e8dfd3" }} />
           </div>
         );
       default:
-        return <div className="text-xs text-charcoal-400 p-4">Unknown</div>;
+        return <div className="text-xs p-4" style={{ color: "var(--text-secondary)" }}>Unknown</div>;
     }
   };
 
@@ -277,12 +323,13 @@ function DraggableCard({ card, onDelete, editingId, onStartEdit, onSave }: {
     >
       {!isEditing && (
         <div {...listeners} className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing">
-          <div className="px-3 py-0.5 rounded-full bg-clay-700 text-white text-[10px] font-medium shadow-lg">drag</div>
+          <div className="px-3 py-0.5 rounded-full text-white text-[10px] font-medium shadow-lg" style={{ background: "var(--accent)" }}>drag</div>
         </div>
       )}
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
-        className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white text-xs opacity-0 group-hover:opacity-100 transition hover:bg-red-600 shadow-lg flex items-center justify-center z-10"
+        className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 transition shadow-lg flex items-center justify-center z-10"
+        style={{ background: "var(--accent)" }}
       >
         &times;
       </button>
@@ -396,13 +443,13 @@ function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId:
 }
 
 const TOOLBAR_ITEMS = [
-  { type: "note", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z", label: "Note", color: "bg-bone-200 dark:bg-charcoal-800 text-clay-600" },
-  { type: "heading", icon: "M4 6h16M4 12h16M4 18h7", label: "Heading", color: "bg-sage-100 dark:bg-sage-900/30 text-sage-600" },
-  { type: "todo", icon: "M9 5l7 7-7 7", label: "To-Do", color: "bg-clay-100 dark:bg-clay-900/30 text-clay-600" },
-  { type: "link", icon: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1", label: "Link", color: "bg-charcoal-100 dark:bg-charcoal-800 text-charcoal-600" },
-  { type: "color", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Color", color: "bg-sage-100 dark:bg-sage-900/30 text-sage-600" },
-  { type: "image", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Image", color: "bg-sage-100 dark:bg-sage-900/30 text-sage-600" },
-  { type: "video", icon: "M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM15.75 16.5a12.015 12.015 0 00-7.5 0m11.25-1.5a12.015 12.015 0 00-7.5-2.25m-7.5 9.75h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003.75 6v12a1.5 1.5 0 001.5 1.5z", label: "Video", color: "bg-sage-100 dark:bg-sage-900/30 text-sage-600" },
+  { type: "note", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z", label: "Note" },
+  { type: "heading", icon: "M4 6h16M4 12h16M4 18h7", label: "Heading" },
+  { type: "todo", icon: "M9 5l7 7-7 7", label: "To-Do" },
+  { type: "link", icon: "M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1", label: "Link" },
+  { type: "color", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Color" },
+  { type: "image", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Image" },
+  { type: "video", icon: "M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM15.75 16.5a12.015 12.015 0 00-7.5 0m11.25-1.5a12.015 12.015 0 00-7.5-2.25m-7.5 9.75h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003.75 6v12a1.5 1.5 0 001.5 1.5z", label: "Video" },
 ];
 
 export default function BoardPage() {
@@ -637,7 +684,7 @@ export default function BoardPage() {
       });
   }
 
-  if (loading) return <div className="h-screen flex items-center justify-center text-charcoal-400">Loading board...</div>;
+  if (loading) return <div className="h-screen flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>Loading board...</div>;
   if (!board) return null;
 
   return (
@@ -648,23 +695,25 @@ export default function BoardPage() {
 
       {showSaveTemplate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowSaveTemplate(false)}>
-          <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-sm m-4 p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="font-serif text-xl text-clay-800 dark:text-clay-200 mb-1">Save as Template</h2>
-            <p className="text-sm text-charcoal-500 dark:text-charcoal-400 mb-4">Save this board's layout for reuse</p>
+          <div className="rounded-2xl shadow-2xl w-full max-w-sm m-4 p-6" style={{ background: "var(--card-bg)", border: "1px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
+            <h2 className="font-display text-xl mb-1" style={{ color: "var(--text-primary)" }}>Save as Template</h2>
+            <p className="text-sm mb-4" style={{ color: "var(--text-secondary)" }}>Save this board&apos;s layout for reuse</p>
             <input
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
               placeholder="Template name"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400 mb-4"
+              className="w-full px-3 py-2 text-sm rounded-lg mb-4 focus:outline-none focus:ring-1"
+              style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)", color: "var(--text-primary)", "--tw-ring-color": "var(--accent)" } as any}
               autoFocus
               onKeyDown={(e) => e.key === "Enter" && saveAsTemplate()}
             />
             <div className="flex gap-2 justify-end">
-              <button onClick={() => { setShowSaveTemplate(false); setTemplateName(""); }} className="px-3 py-1.5 rounded-lg text-charcoal-500 hover:bg-sage-50 dark:hover:bg-charcoal-800 text-sm transition">Cancel</button>
+              <button onClick={() => { setShowSaveTemplate(false); setTemplateName(""); }} className="px-3 py-1.5 rounded-lg text-sm transition" style={{ color: "var(--text-secondary)" }}>Cancel</button>
               <button
                 onClick={saveAsTemplate}
                 disabled={!templateName.trim() || savingTemplate}
-                className="px-4 py-1.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition disabled:opacity-50"
+                className="px-4 py-1.5 rounded-lg text-white text-sm font-medium transition disabled:opacity-50"
+                style={{ background: "var(--accent)" }}
               >
                 {savingTemplate ? "Saving..." : "Save"}
               </button>
@@ -675,13 +724,13 @@ export default function BoardPage() {
 
       {showShare && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setShowShare(false)}>
-          <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-lg m-4 max-h-[80vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6 border-b border-sage-200 dark:border-charcoal-700 flex items-center justify-between">
+          <div className="rounded-2xl shadow-2xl w-full max-w-lg m-4 max-h-[80vh] overflow-auto" style={{ background: "var(--card-bg)", border: "1px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
               <div>
-                <h2 className="font-serif text-xl text-clay-800 dark:text-clay-200">Share with Client</h2>
-                <p className="text-sm text-charcoal-500 dark:text-charcoal-400 mt-1">Generate a link for client approval</p>
+                <h2 className="font-display text-xl" style={{ color: "var(--text-primary)" }}>Share with Client</h2>
+                <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>Generate a link for client approval</p>
               </div>
-              <button onClick={() => setShowShare(false)} className="p-2 rounded-lg hover:bg-sage-100 dark:hover:bg-charcoal-800 text-charcoal-500 transition">
+              <button onClick={() => setShowShare(false)} className="p-2 rounded-lg transition" style={{ color: "var(--text-secondary)" }}>
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -691,54 +740,57 @@ export default function BoardPage() {
                   value={shareName}
                   onChange={(e) => setShareName(e.target.value)}
                   placeholder="Client name (optional)"
-                  className="px-3 py-2 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400"
+                  className="px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-1"
+                  style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)", color: "var(--text-primary)" }}
                 />
                 <input
                   value={shareEmail}
                   onChange={(e) => setShareEmail(e.target.value)}
                   placeholder="Client email (optional)"
-                  className="px-3 py-2 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400"
+                  className="px-3 py-2 text-sm rounded-lg focus:outline-none focus:ring-1"
+                  style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)", color: "var(--text-primary)" }}
                 />
               </div>
               <button
                 onClick={createShare}
                 disabled={creatingShare}
-                className="w-full px-4 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition disabled:opacity-50"
+                className="w-full px-4 py-2.5 rounded-lg text-white text-sm font-medium transition disabled:opacity-50"
+                style={{ background: "var(--accent)" }}
               >
                 {creatingShare ? "Creating..." : "Generate Share Link"}
               </button>
 
               {shares.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-medium text-charcoal-600 dark:text-charcoal-400 mb-3">Shared Links</h3>
+                  <h3 className="text-sm font-medium mb-3" style={{ color: "var(--text-secondary)" }}>Shared Links</h3>
                   <div className="space-y-2">
                     {shares.map((share) => {
                       const url = `${typeof window !== "undefined" ? window.location.origin : ""}/share/${share.token}`;
                       const latestReview = share.reviews?.[0];
                       return (
-                        <div key={share.id} className="p-3 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-800">
+                        <div key={share.id} className="p-3 rounded-lg" style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
                           <div className="flex items-center justify-between mb-2">
                             <div>
-                              {share.clientName && <span className="text-sm font-medium text-charcoal-900 dark:text-bone-100">{share.clientName}</span>}
-                              {share.clientEmail && <span className="text-xs text-charcoal-400 ml-2">{share.clientEmail}</span>}
+                              {share.clientName && <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{share.clientName}</span>}
+                              {share.clientEmail && <span className="text-xs ml-2" style={{ color: "var(--text-secondary)" }}>{share.clientEmail}</span>}
                             </div>
                             <div className="flex items-center gap-2">
                               {share.status !== "pending" && (
-                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${share.status === "approved" ? "bg-sage-100 text-sage-700 dark:bg-sage-900/30 dark:text-sage-400" : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"}`}>
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-medium" style={{ background: share.status === "approved" ? "var(--accent-soft)" : "rgba(220,38,38,0.1)", color: share.status === "approved" ? "var(--accent)" : "#dc2626" }}>
                                   {share.status}
                                 </span>
                               )}
-                              <button onClick={() => revokeShare(share.id)} className="text-charcoal-400 hover:text-red-500 transition" title="Revoke">
+                              <button onClick={() => revokeShare(share.id)} className="transition" style={{ color: "var(--text-secondary)" }} title="Revoke">
                                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                               </button>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <input readOnly value={url} className="flex-1 px-2 py-1 text-xs rounded bg-white dark:bg-charcoal-900 border border-sage-200 dark:border-charcoal-700 text-charcoal-500 font-mono" />
-                            <button onClick={() => { navigator.clipboard.writeText(url); }} className="px-2 py-1 text-xs rounded bg-sage-100 dark:bg-sage-900/30 text-sage-700 dark:text-sage-400 hover:bg-sage-200 dark:hover:bg-sage-900/50 transition">Copy</button>
+                            <input readOnly value={url} className="flex-1 px-2 py-1 text-xs rounded font-mono" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", color: "var(--text-secondary)" }} />
+                            <button onClick={() => { navigator.clipboard.writeText(url); }} className="px-2 py-1 text-xs rounded transition" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>Copy</button>
                           </div>
                           {latestReview?.comment && (
-                            <p className="text-xs text-charcoal-400 mt-2 italic">&quot;{latestReview.comment}&quot;</p>
+                            <p className="text-xs mt-2 italic" style={{ color: "var(--text-secondary)" }}>&quot;{latestReview.comment}&quot;</p>
                           )}
                         </div>
                       );
@@ -751,10 +803,10 @@ export default function BoardPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-sage-200 dark:border-charcoal-700 bg-white/80 dark:bg-charcoal-950/80 backdrop-blur-sm flex-shrink-0">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b" style={{ borderColor: "var(--border)", background: "var(--card-bg)" }}>
         <div className="flex items-center gap-3">
-          <Link href={`/projects/${board.project?.id}`} className="text-sm text-sage-600 dark:text-sage-400 hover:underline">&larr;</Link>
-          <span className="font-serif text-lg text-clay-800 dark:text-clay-200">{board.title}</span>
+          <Link href={`/projects/${board.project?.id}`} className="text-sm hover:underline" style={{ color: "var(--accent)" }}>&larr;</Link>
+          <span className="font-display text-lg" style={{ color: "var(--text-primary)" }}>{board.title}</span>
           {confirmDelete ? (
             <div className="flex items-center gap-2 ml-2">
               <span className="text-xs text-red-600 font-medium">Delete this board?</span>
@@ -781,7 +833,8 @@ export default function BoardPage() {
           {cards.length > 0 && (
             <button
               onClick={() => setShowSaveTemplate(true)}
-              className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1.5"
+              className="px-3 py-1.5 rounded-lg text-sm transition flex items-center gap-1.5"
+              style={{ border: "1px solid var(--border)", color: "var(--text-primary)", background: "var(--card-bg)" }}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
               Save as Template
@@ -789,14 +842,16 @@ export default function BoardPage() {
           )}
           <button
             onClick={() => { setShowShare(true); loadShares(); }}
-            className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg text-sm transition flex items-center gap-1.5"
+            style={{ border: "1px solid var(--border)", color: "var(--text-primary)", background: "var(--card-bg)" }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
             Share
           </button>
           <button
             onClick={() => setShowTemplates(true)}
-            className="px-3 py-1.5 rounded-lg border border-sage-300 dark:border-charcoal-600 text-charcoal-600 dark:text-charcoal-300 text-sm hover:bg-sage-50 dark:hover:bg-charcoal-800 transition flex items-center gap-1.5"
+            className="px-3 py-1.5 rounded-lg text-sm transition flex items-center gap-1.5"
+            style={{ border: "1px solid var(--border)", color: "var(--text-primary)", background: "var(--card-bg)" }}
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
             Templates
@@ -820,19 +875,20 @@ export default function BoardPage() {
 
       <div
         ref={canvasRef}
-        className="flex-1 overflow-auto bg-bone-50 dark:bg-charcoal-950 relative"
+        className="flex-1 overflow-auto relative"
+        style={{ background: "var(--bg-primary)" }}
         onDragOver={(e) => { if (dragType) e.preventDefault(); }}
         onDrop={handleCanvasDrop}
         onClick={() => { setEditingId(null); setShowVideoInput(false); }}
       >
         {cards.length === 0 && !showTemplates ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4">
-            <div className="w-20 h-20 rounded-2xl bg-bone-200 dark:bg-charcoal-800 flex items-center justify-center mb-6">
-              <svg className="w-10 h-10 text-clay-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+            <div className="w-20 h-20 rounded-2xl flex items-center justify-center mb-6" style={{ background: "var(--bg-secondary)" }}>
+              <svg className="w-10 h-10" style={{ color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
             </div>
-            <h2 className="font-serif text-2xl text-clay-800 dark:text-clay-200 mb-2">This board is empty</h2>
-            <p className="text-charcoal-500 dark:text-charcoal-400 text-sm mb-8 max-w-sm">Click a tool from the sidebar to add cards, or start with a template.</p>
-            <button onClick={() => setShowTemplates(true)} className="px-5 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white font-medium transition">Browse Templates</button>
+            <h2 className="font-display text-2xl mb-2" style={{ color: "var(--text-primary)" }}>This board is empty</h2>
+            <p className="text-sm mb-8 max-w-sm" style={{ color: "var(--text-secondary)" }}>Click a tool from the sidebar to add cards, or start with a template.</p>
+            <button onClick={() => setShowTemplates(true)} className="px-5 py-2.5 rounded-lg text-white font-medium transition" style={{ background: "var(--accent)" }}>Browse Templates</button>
           </div>
         ) : (
           <>
@@ -862,12 +918,12 @@ export default function BoardPage() {
                     onDragStart={(e) => { setDragType(item.type); e.dataTransfer.setData("text/plain", item.type); }}
                     onDragEnd={() => setDragType(null)}
                     onClick={(e) => { e.stopPropagation(); handleToolbarClick(item.type); }}
-                    className={`w-10 h-10 rounded-xl ${item.color} flex items-center justify-center shadow-md border border-sage-200 dark:border-charcoal-700 hover:scale-110 transition-transform cursor-grab active:cursor-grabbing`}
+                    className="toolbar-btn"
                     title={item.label}
                   >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} /></svg>
+                    <svg className="w-5 h-5" style={{ color: "var(--text-primary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} /></svg>
                   </button>
-                  <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-charcoal-900 text-bone-100 text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/tool:opacity-100 transition pointer-events-none">
+                  <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/tool:opacity-100 transition pointer-events-none" style={{ background: "var(--text-primary)", color: "var(--bg-primary)" }}>
                     {item.label}
                   </span>
                 </div>

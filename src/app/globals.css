@@ -2,33 +2,165 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg-primary: #faf8f5;
-  --bg-secondary: #f5f0ea;
-  --text-primary: #1a1a1d;
-  --text-secondary: #6d6c76;
-  --accent: #5c7e53;
-  --border: #e8dfd3;
+  --bg-primary: #f4f1ea;
+  --bg-secondary: #ede8dd;
+  --text-primary: #21201c;
+  --text-secondary: #8c877a;
+  --accent: #d1392c;
+  --accent-soft: #fbe4e1;
+  --border: #e2ddd0;
+  --card-bg: #ffffff;
+  --card-shadow: 0 1px 2px rgba(33,32,28,0.05), 0 6px 16px rgba(33,32,28,0.06);
+  --card-shadow-hover: 0 2px 4px rgba(33,32,28,0.07), 0 8px 24px rgba(33,32,28,0.09);
 }
 
 .dark {
   --bg-primary: #1a1a1d;
-  --bg-secondary: #2a2a2e;
-  --text-primary: #f5f0ea;
-  --text-secondary: #aeadb4;
-  --accent: #7a9b70;
-  --border: #3c3b3f;
+  --bg-secondary: #222224;
+  --text-primary: #f4f1ea;
+  --text-secondary: #8c877a;
+  --accent: #e85d4a;
+  --accent-soft: rgba(232,93,74,0.12);
+  --border: #333230;
+  --card-bg: #252527;
+  --card-shadow: 0 1px 2px rgba(0,0,0,0.2), 0 6px 16px rgba(0,0,0,0.3);
+  --card-shadow-hover: 0 2px 4px rgba(0,0,0,0.25), 0 8px 24px rgba(0,0,0,0.35);
 }
 
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .board-canvas {
+  background-color: var(--bg-primary);
   background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
-  background-size: 24px 24px;
+  background-size: 20px 20px;
+}
+
+/* Milanote-style card base */
+.mcard {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--card-shadow);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.mcard:hover {
+  box-shadow: var(--card-shadow-hover);
+  border-color: #cfcfcf;
+}
+
+.dark .mcard:hover {
+  border-color: #444;
+}
+
+/* Card header bar */
+.mcard-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Tally accent dot */
+.rec-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+  margin-right: 5px;
+}
+
+/* EXIF metadata badges */
+.exif-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9.5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* Slate label */
+.slate-label {
+  font-family: 'IBM Plex Mono', monospace;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Timeline scrub bar */
+.scrub-bar {
+  height: 34px;
+  border-radius: 4px;
+  background: repeating-linear-gradient(90deg, #ece6d8, #ece6d8 6px, #e2dac8 6px, #e2dac8 7px);
+  position: relative;
+}
+
+.dark .scrub-bar {
+  background: repeating-linear-gradient(90deg, #333, #333 6px, #2a2a2a 6px, #2a2a2a 7px);
+}
+
+.playhead {
+  position: absolute;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--accent);
+}
+
+/* Status dot colors */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Toolbar item style */
+.toolbar-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  cursor: grab;
+}
+
+.toolbar-btn:hover {
+  transform: scale(1.1);
+  box-shadow: var(--card-shadow-hover);
+}
+
+.toolbar-btn:active {
+  cursor: grabbing;
+}
+
+/* Subtle page transition */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.2s ease-out;
 }

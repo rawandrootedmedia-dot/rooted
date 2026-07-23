@@ -229,13 +229,14 @@ function EditableLink({ card, editing, onStartEdit, onSave }: EditableCardProps)
   );
 }
 
-function EditableColumn({ card, editing, onStartEdit, onSave }: EditableCardProps) {
+function EditableColumn({ card, editing, onStartEdit, onSave, childCount, isDragOver }: EditableCardProps & { childCount?: number; isDragOver?: boolean }) {
   const [val, setVal] = useState(card.content?.text || "");
   useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
   if (editing) return (
-    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "transparent", border: "1px dashed var(--green)" }}>
+    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: isDragOver ? "rgba(60,74,46,0.08)" : "transparent", border: isDragOver ? "2px solid var(--green)" : "1px dashed var(--green)" }}>
       <div className="mcard-head" style={{ borderBottom: "1px dashed var(--border)" }}>
         <span>column</span>
+        {childCount !== undefined && childCount > 0 && <span style={{ color: "var(--text-secondary)" }}>{childCount} card{childCount !== 1 ? "s" : ""}</span>}
         <span style={{ color: "var(--green)" }}>editing</span>
       </div>
       <input
@@ -251,9 +252,10 @@ function EditableColumn({ card, editing, onStartEdit, onSave }: EditableCardProp
     </div>
   );
   return (
-    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-lg overflow-hidden cursor-text" style={{ background: "transparent", border: "1px dashed var(--border)" }}>
+    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-lg overflow-hidden cursor-text" style={{ background: isDragOver ? "rgba(60,74,46,0.08)" : "transparent", border: isDragOver ? "2px solid var(--green)" : "1px dashed var(--border)" }}>
       <div className="mcard-head" style={{ borderBottom: "1px dashed var(--border)" }}>
         <span>column</span>
+        {childCount !== undefined && childCount > 0 && <span style={{ color: "var(--text-secondary)" }}>{childCount} card{childCount !== 1 ? "s" : ""}</span>}
       </div>
       <div className="px-3 py-2 flex-1">
         <h3 className="font-display text-base" style={{ color: "var(--text-primary)" }}>{card.content?.text || <span style={{ color: "var(--text-secondary)" }} className="italic">Click to title...</span>}</h3>
@@ -262,13 +264,14 @@ function EditableColumn({ card, editing, onStartEdit, onSave }: EditableCardProp
   );
 }
 
-function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSave }: {
+function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSave, isDragOver }: {
   card: CardData;
   allCards: CardData[];
   onDelete: (id: string) => void;
   editingId: string | null;
   onStartEdit: (id: string) => void;
   onSave: (id: string, content: any) => void;
+  isDragOver?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: card.id });
 
@@ -338,7 +341,7 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
       case "link":
         return <EditableLink card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
       case "column":
-        return <EditableColumn card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+        return <EditableColumn card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} childCount={allCards.filter((c) => c.parentId === card.id).length} isDragOver={isDragOver} />;
       case "color":
         return (
           <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
@@ -509,6 +512,7 @@ export default function BoardPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
+  const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -594,8 +598,18 @@ export default function BoardPage() {
     const delta = event.delta || { x: 0, y: 0 };
     const card = cards.find((c) => c.id === cardId);
     if (!card) return;
+    setDragOverColumnId(null);
 
-    const updates: { id: string; x: number; y: number; parentId?: string | null }[] = [];
+    const updates: { id: string; x: number; y: number; parentId?: string | null; height?: number }[] = [];
+
+    function isDescendant(colId: string, testId: string): boolean {
+      const children = cards.filter((c) => c.parentId === colId);
+      for (const child of children) {
+        if (child.id === testId) return true;
+        if (child.type === "column" && isDescendant(child.id, testId)) return true;
+      }
+      return false;
+    }
 
     if (card.type === "column") {
       const parent = card.parentId ? cards.find((c) => c.id === card.parentId) : null;
@@ -605,8 +619,27 @@ export default function BoardPage() {
       const newAbsY = Math.max(0, curAbsY + delta.y);
       const dx = newAbsX - curAbsX;
       const dy = newAbsY - curAbsY;
+
+      let targetColumnId: string | null = null;
+      for (const c of cards) {
+        if (c.type !== "column" || c.id === cardId || c.parentId === cardId) continue;
+        if (!isDescendant(cardId, c.id)) continue;
+        if (newAbsX >= c.x && newAbsX <= c.x + c.width && newAbsY >= c.y && newAbsY <= c.y + c.height) {
+          targetColumnId = c.id;
+          break;
+        }
+      }
+
+      let storeX = parent ? newAbsX - parent.x : newAbsX;
+      let storeY = parent ? newAbsY - parent.y : newAbsY;
+      if (targetColumnId) {
+        const col = cards.find((c) => c.id === targetColumnId)!;
+        storeX = newAbsX - col.x;
+        storeY = newAbsY - col.y;
+      }
+
       setCards((prev) => prev.map((c) => {
-        if (c.id === cardId) return { ...c, x: parent ? newAbsX - parent.x : newAbsX, y: parent ? newAbsY - parent.y : newAbsY };
+        if (c.id === cardId) return { ...c, x: storeX, y: storeY, parentId: targetColumnId };
         if (c.parentId === cardId) {
           const childNewX = Math.max(0, c.x + dx);
           const childNewY = Math.max(0, c.y + dy);
@@ -615,7 +648,7 @@ export default function BoardPage() {
         }
         return c;
       }));
-      updates.push({ id: cardId, x: parent ? newAbsX - parent.x : newAbsX, y: parent ? newAbsY - parent.y : newAbsY });
+      updates.push({ id: cardId, x: storeX, y: storeY, parentId: targetColumnId });
     } else {
       const curParent = card.parentId ? cards.find((c) => c.id === card.parentId) : null;
       const curAbsX = curParent ? curParent.x + card.x : card.x;
@@ -645,7 +678,25 @@ export default function BoardPage() {
     }
 
     for (const u of updates) {
-      await updateCard(u.id, { x: u.x, y: u.y, ...(u.parentId !== undefined ? { parentId: u.parentId } : {}) });
+      await updateCard(u.id, { x: u.x, y: u.y, ...(u.parentId !== undefined ? { parentId: u.parentId } : {}), ...(u.height !== undefined ? { height: u.height } : {}) });
+    }
+
+    const targetColId = updates.find((u) => u.parentId !== undefined)?.parentId;
+    if (targetColId) {
+      const col = cards.find((c) => c.id === targetColId);
+      if (col) {
+        const children = cards.filter((c) => c.parentId === targetColId && c.id !== cardId);
+        const droppedCard = cards.find((c) => c.id === cardId);
+        if (droppedCard) {
+          const allChildren = [...children, { ...droppedCard, x: updates.find((u) => u.id === cardId)?.x ?? droppedCard.x, y: updates.find((u) => u.id === cardId)?.y ?? droppedCard.y }];
+          const maxBottom = Math.max(...allChildren.map((c) => c.y + c.height), 0);
+          const newHeight = Math.max(col.height, maxBottom + 48);
+          if (newHeight > col.height) {
+            setCards((prev) => prev.map((c) => (c.id === targetColId ? { ...c, height: newHeight } : c)));
+            await updateCard(targetColId, { height: newHeight });
+          }
+        }
+      }
     }
   }, [cards, updateCard]);
 
@@ -976,7 +1027,26 @@ export default function BoardPage() {
         ref={canvasRef}
         className="flex-1 overflow-auto relative"
         style={{ background: "var(--bg-primary)" }}
-        onDragOver={(e) => { if (dragType) e.preventDefault(); }}
+        onDragOver={(e) => {
+          if (!dragType) return;
+          e.preventDefault();
+          if (!canvasRef.current) return;
+          const rect = canvasRef.current.getBoundingClientRect();
+          const mx = e.clientX - rect.left + canvasRef.current.scrollLeft;
+          const my = e.clientY - rect.top + canvasRef.current.scrollTop;
+          let found: string | null = null;
+          for (const c of cards) {
+            if (c.type !== "column") continue;
+            const parent = c.parentId ? cards.find((p) => p.id === c.parentId) : null;
+            const absX = parent ? parent.x + c.x : c.x;
+            const absY = parent ? parent.y + c.y : c.y;
+            if (mx >= absX && mx <= absX + c.width && my >= absY && my <= absY + c.height) {
+              found = c.id;
+              break;
+            }
+          }
+          setDragOverColumnId(found);
+        }}
         onDrop={handleCanvasDrop}
         onClick={() => { setEditingId(null); setShowVideoInput(false); }}
       >
@@ -1005,6 +1075,7 @@ export default function BoardPage() {
                     editingId={editingId}
                     onStartEdit={setEditingId}
                     onSave={handleSaveCard}
+                    isDragOver={dragOverColumnId === card.id}
                   />
                 ))}
               </div>

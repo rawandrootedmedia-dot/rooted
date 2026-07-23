@@ -290,7 +290,7 @@ function EditableColumn({ card, editing, onStartEdit, onSave, childCount, isDrag
   );
 }
 
-function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSave, isDragOver }: {
+function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSave, isDragOver, onResize }: {
   card: CardData;
   allCards: CardData[];
   onDelete: (id: string) => void;
@@ -298,6 +298,7 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
   onStartEdit: (id: string) => void;
   onSave: (id: string, content: any) => void;
   isDragOver?: boolean;
+  onResize?: (id: string, e: React.MouseEvent) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: card.id });
 
@@ -404,19 +405,30 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
           >
             &times;
           </button>
+          {onResize && (
+            <div
+              className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize opacity-0 group-hover:opacity-100 transition z-20 flex items-end justify-end"
+              onMouseDown={(e) => onResize(card.id, e)}
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: "var(--text-secondary)" }}>
+                <path d="M11 1L1 11M11 5L5 11M11 9L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
+          )}
         </>
       )}
     </div>
   );
 }
 
-function ChildCard({ card, allCards, editingId, onStartEdit, onSave, onDelete }: {
+function ChildCard({ card, allCards, editingId, onStartEdit, onSave, onDelete, onResize }: {
   card: CardData;
   allCards: CardData[];
   editingId: string | null;
   onStartEdit: (id: string) => void;
   onSave: (id: string, content: any) => void;
   onDelete: (id: string) => void;
+  onResize?: (id: string, e: React.MouseEvent) => void;
 }) {
   const isEditing = editingId === card.id;
 
@@ -476,14 +488,157 @@ function ChildCard({ card, allCards, editingId, onStartEdit, onSave, onDelete }:
     >
       {renderChildVisual()}
       {!isEditing && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
-          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-white text-[10px] opacity-0 group-hover:opacity-100 transition shadow flex items-center justify-center z-20"
-          style={{ background: "var(--accent)" }}
-        >
-          &times;
-        </button>
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
+            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-white text-[10px] opacity-0 group-hover:opacity-100 transition shadow flex items-center justify-center z-20"
+            style={{ background: "var(--accent)" }}
+          >
+            &times;
+          </button>
+          {onResize && (
+            <div
+              className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize opacity-0 group-hover:opacity-100 transition z-20 flex items-end justify-end"
+              onMouseDown={(e) => onResize(card.id, e)}
+            >
+              <svg width="10" height="10" viewBox="0 0 12 12" style={{ color: "var(--text-secondary)" }}>
+                <path d="M11 1L1 11M11 5L5 11M11 9L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+              </svg>
+            </div>
+          )}
+        </>
       )}
+    </div>
+  );
+}
+
+function ImageSearchPanel({ onAdd, onClose }: { onAdd: (image: any) => void; onClose: () => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [draggingImg, setDraggingImg] = useState<any>(null);
+
+  async function search(q: string, p: number = 1) {
+    if (!q.trim()) return;
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/images/search?q=${encodeURIComponent(q)}&page=${p}&per_page=20`);
+      const data = await res.json();
+      if (data.images) {
+        setResults((prev) => (p === 1 ? data.images : [...prev, ...data.images]));
+        setPage(p);
+        setTotalPages(data.totalPages || 0);
+      }
+    } catch {}
+    setSearching(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Enter") { setResults([]); search(query, 1); }
+  }
+
+  return (
+    <div
+      className="fixed right-0 top-0 bottom-0 z-50 flex flex-col shadow-2xl"
+      style={{ width: 360, background: "var(--card-bg)", borderLeft: "1px solid var(--border)" }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
+        <h3 className="font-display text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Image Search</h3>
+        <button onClick={onClose} className="p-1 rounded transition" style={{ color: "var(--text-secondary)" }}>
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <div className="px-4 py-3 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
+        <div className="flex gap-2">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Search Unsplash..."
+            className="flex-1 px-3 py-1.5 text-sm rounded-lg focus:outline-none"
+            style={{ border: "1px solid var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)" }}
+            autoFocus
+          />
+          <button
+            onClick={() => { setResults([]); search(query, 1); }}
+            disabled={searching || !query.trim()}
+            className="px-3 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50"
+            style={{ background: "var(--green)", color: "#fff" }}
+          >
+            {searching ? "..." : "Search"}
+          </button>
+        </div>
+        <p className="text-[10px] mt-2 font-mono" style={{ color: "var(--text-secondary)" }}>Powered by Unsplash</p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4">
+        {results.length === 0 && !searching && (
+          <div className="h-full flex flex-col items-center justify-center text-center">
+            <svg className="w-10 h-10 mb-3" style={{ color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" /></svg>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Search for images to add to your board</p>
+          </div>
+        )}
+
+        {searching && results.length === 0 && (
+          <div className="h-full flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "var(--green)", borderTopColor: "transparent" }} />
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <div className="grid grid-cols-2 gap-2">
+            {results.map((img) => (
+              <div
+                key={img.id}
+                className="relative group rounded-lg overflow-hidden cursor-pointer"
+                style={{ aspectRatio: `${img.width}/${img.height}` }}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("application/json", JSON.stringify(img));
+                  e.dataTransfer.effectAllowed = "copy";
+                  setDraggingImg(img);
+                }}
+                onDragEnd={() => setDraggingImg(null)}
+                onClick={() => onAdd(img)}
+              >
+                <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" loading="lazy" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-end justify-between p-1.5 opacity-0 group-hover:opacity-100">
+                  <span className="text-[9px] text-white font-mono truncate">{img.author}</span>
+                  <div className="flex gap-1">
+                    <button
+                      className="px-1.5 py-0.5 rounded text-[9px] font-medium text-white transition"
+                      style={{ background: "var(--green)" }}
+                      onClick={(e) => { e.stopPropagation(); onAdd(img); }}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {searching && results.length > 0 && (
+          <div className="flex justify-center py-4">
+            <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--green)", borderTopColor: "transparent" }} />
+          </div>
+        )}
+
+        {!searching && results.length > 0 && page < totalPages && (
+          <button
+            onClick={() => search(query, page + 1)}
+            className="w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium transition"
+            style={{ border: "1px solid var(--border)", color: "var(--text-primary)", background: "var(--bg-secondary)" }}
+          >
+            Load more
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -617,6 +772,8 @@ export default function BoardPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dragType, setDragType] = useState<string | null>(null);
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
+  const [resizingId, setResizingId] = useState<string | null>(null);
+  const [resizeStart, setResizeStart] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -934,11 +1091,7 @@ export default function BoardPage() {
 
   function handleToolbarClick(type: string) {
     if (type === "image") {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = (e) => handleFileUpload(e as any, "image");
-      input.click();
+      setShowImageSearch(true);
       return;
     }
     if (type === "video") {
@@ -1017,6 +1170,37 @@ export default function BoardPage() {
     }
   }
 
+  function startResize(cardId: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    e.preventDefault();
+    const card = cards.find((c) => c.id === cardId);
+    if (!card) return;
+    const startW = card.width;
+    const startH = card.height;
+    setResizingId(cardId);
+    setResizeStart({ x: e.clientX, y: e.clientY, w: startW, h: startH });
+
+    function onMove(ev: MouseEvent) {
+      const dx = ev.clientX - e.clientX;
+      const dy = ev.clientY - e.clientY;
+      const newW = Math.max(120, startW + dx);
+      const newH = Math.max(60, startH + dy);
+      setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, width: newW, height: newH } : c)));
+    }
+
+    function onUp() {
+      setResizingId(null);
+      setResizeStart(null);
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      const finalCard = cards.find((c) => c.id === cardId);
+      if (finalCard) updateCard(cardId, { width: finalCard.width, height: finalCard.height });
+    }
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }
+
   async function deleteBoard() {
     await fetch(`/api/boards/${id}`, { method: "DELETE" });
     const projectId = board?.project?.id;
@@ -1039,6 +1223,13 @@ export default function BoardPage() {
     <div className="h-screen flex flex-col">
       {showTemplates && (
         <TemplatePicker boardId={id as string} onSelect={handleTemplateApplied} onClose={() => setShowTemplates(false)} />
+      )}
+
+      {showImageSearch && (
+        <ImageSearchPanel
+          onAdd={(img) => { addImageToCanvas(img); setShowImageSearch(false); }}
+          onClose={() => setShowImageSearch(false)}
+        />
       )}
 
       {showSaveTemplate && (
@@ -1280,6 +1471,7 @@ export default function BoardPage() {
                           onStartEdit={setEditingId}
                           onSave={handleSaveCard}
                           isDragOver={dragOverColumnId === card.id}
+                          onResize={startResize}
                         />
                       ))}
 
@@ -1318,9 +1510,20 @@ export default function BoardPage() {
                                   onStartEdit={setEditingId}
                                   onSave={handleSaveCard}
                                   onDelete={deleteCard}
+                                  onResize={startResize}
                                 />
                               ))}
                             </EditableColumn>
+                            {!isEditing && (
+                              <div
+                                className="absolute bottom-0 right-0 w-5 h-5 cursor-se-resize opacity-0 group-hover:opacity-100 transition z-20 flex items-end justify-end"
+                                onMouseDown={(e) => startResize(col.id, e)}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 12 12" style={{ color: "var(--text-secondary)" }}>
+                                  <path d="M11 1L1 11M11 5L5 11M11 9L9 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+                                </svg>
+                              </div>
+                            )}
                           </div>
                         );
                       })}

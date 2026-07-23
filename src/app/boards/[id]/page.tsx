@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { DndContext, useDraggable, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { DndContext, useDraggable, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragMoveEvent } from "@dnd-kit/core";
 
 type CardData = {
   id: string;
@@ -233,7 +233,7 @@ function EditableColumn({ card, editing, onStartEdit, onSave, childCount, isDrag
   const [val, setVal] = useState(card.content?.text || "");
   useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
   if (editing) return (
-    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: isDragOver ? "rgba(60,74,46,0.08)" : "transparent", border: isDragOver ? "2px solid var(--green)" : "1px dashed var(--green)" }}>
+    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: isDragOver ? "rgba(60,74,46,0.12)" : "transparent", border: isDragOver ? "2px solid var(--green)" : "1px dashed var(--green)", boxShadow: isDragOver ? "0 0 0 3px rgba(60,74,46,0.15), inset 0 0 20px rgba(60,74,46,0.05)" : "none", transition: "all 0.15s ease" }}>
       <div className="mcard-head" style={{ borderBottom: "1px dashed var(--border)" }}>
         <span>column</span>
         {childCount !== undefined && childCount > 0 && <span style={{ color: "var(--text-secondary)" }}>{childCount} card{childCount !== 1 ? "s" : ""}</span>}
@@ -252,7 +252,7 @@ function EditableColumn({ card, editing, onStartEdit, onSave, childCount, isDrag
     </div>
   );
   return (
-    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-lg overflow-hidden cursor-text" style={{ background: isDragOver ? "rgba(60,74,46,0.08)" : "transparent", border: isDragOver ? "2px solid var(--green)" : "1px dashed var(--border)" }}>
+    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-lg overflow-hidden cursor-text" style={{ background: isDragOver ? "rgba(60,74,46,0.12)" : "transparent", border: isDragOver ? "2px solid var(--green)" : "1px dashed var(--border)", boxShadow: isDragOver ? "0 0 0 3px rgba(60,74,46,0.15), inset 0 0 20px rgba(60,74,46,0.05)" : "none", transition: "all 0.15s ease" }}>
       <div className="mcard-head" style={{ borderBottom: "1px dashed var(--border)" }}>
         <span>column</span>
         {childCount !== undefined && childCount > 0 && <span style={{ color: "var(--text-secondary)" }}>{childCount} card{childCount !== 1 ? "s" : ""}</span>}
@@ -593,6 +593,32 @@ export default function BoardPage() {
     setShares((prev) => prev.filter((s) => s.id !== shareId));
   }
 
+  const handleDragMove = useCallback((event: DragMoveEvent) => {
+    const { active, delta } = event;
+    const cardId = active.id as string;
+    const card = cards.find((c) => c.id === cardId);
+    if (!card) return;
+
+    const parent = card.parentId ? cards.find((c) => c.id === card.parentId) : null;
+    const curAbsX = parent ? parent.x + card.x : card.x;
+    const curAbsY = parent ? parent.y + card.y : card.y;
+    const curCenterX = curAbsX + card.width / 2 + delta.x;
+    const curCenterY = curAbsY + card.height / 2 + delta.y;
+
+    let found: string | null = null;
+    for (const c of cards) {
+      if (c.type !== "column" || c.id === cardId) continue;
+      const cParent = c.parentId ? cards.find((p) => p.id === c.parentId) : null;
+      const absX = cParent ? cParent.x + c.x : c.x;
+      const absY = cParent ? cParent.y + c.y : c.y;
+      if (curCenterX >= absX && curCenterX <= absX + c.width && curCenterY >= absY && curCenterY <= absY + c.height) {
+        found = c.id;
+        break;
+      }
+    }
+    setDragOverColumnId(found);
+  }, [cards]);
+
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const cardId = event.active.id as string;
     const delta = event.delta || { x: 0, y: 0 };
@@ -621,10 +647,12 @@ export default function BoardPage() {
       const dy = newAbsY - curAbsY;
 
       let targetColumnId: string | null = null;
+      const centerX = newAbsX + card.width / 2;
+      const centerY = newAbsY + card.height / 2;
       for (const c of cards) {
         if (c.type !== "column" || c.id === cardId || c.parentId === cardId) continue;
         if (!isDescendant(cardId, c.id)) continue;
-        if (newAbsX >= c.x && newAbsX <= c.x + c.width && newAbsY >= c.y && newAbsY <= c.y + c.height) {
+        if (centerX >= c.x && centerX <= c.x + c.width && centerY >= c.y && centerY <= c.y + c.height) {
           targetColumnId = c.id;
           break;
         }
@@ -657,9 +685,11 @@ export default function BoardPage() {
       const newAbsY = Math.max(0, curAbsY + delta.y);
 
       let targetColumnId: string | null = null;
+      const centerX2 = newAbsX + card.width / 2;
+      const centerY2 = newAbsY + card.height / 2;
       for (const c of cards) {
         if (c.type !== "column" || c.id === cardId) continue;
-        if (newAbsX >= c.x && newAbsX <= c.x + c.width && newAbsY >= c.y && newAbsY <= c.y + c.height) {
+        if (centerX2 >= c.x && centerX2 <= c.x + c.width && centerY2 >= c.y && centerY2 <= c.y + c.height) {
           targetColumnId = c.id;
           break;
         }
@@ -1061,7 +1091,7 @@ export default function BoardPage() {
           </div>
         ) : (
           <>
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <DndContext sensors={sensors} onDragMove={handleDragMove} onDragEnd={handleDragEnd}>
               <div
                 className="board-canvas relative min-w-[200%] min-h-[200%] w-[4000px] h-[4000px]"
                 onClick={(e) => { e.stopPropagation(); setEditingId(null); }}

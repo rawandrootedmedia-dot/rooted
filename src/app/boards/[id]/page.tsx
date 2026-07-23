@@ -229,37 +229,63 @@ function EditableLink({ card, editing, onStartEdit, onSave }: EditableCardProps)
   );
 }
 
-function EditableColumn({ card, editing, onStartEdit, onSave, childCount, isDragOver }: EditableCardProps & { childCount?: number; isDragOver?: boolean }) {
+function EditableColumn({ card, editing, onStartEdit, onSave, childCount, isDragOver, children, onAddCard, onRemoveChild, onChildDragStart }: EditableCardProps & { childCount?: number; isDragOver?: boolean; children?: React.ReactNode; onAddCard?: () => void; onRemoveChild?: (childId: string) => void; onChildDragStart?: (childId: string) => void }) {
   const [val, setVal] = useState(card.content?.text || "");
   useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
-  if (editing) return (
-    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: isDragOver ? "rgba(60,74,46,0.12)" : "transparent", border: isDragOver ? "2px solid var(--green)" : "1px dashed var(--green)", boxShadow: isDragOver ? "0 0 0 3px rgba(60,74,46,0.15), inset 0 0 20px rgba(60,74,46,0.05)" : "none", transition: "all 0.15s ease" }}>
-      <div className="mcard-head" style={{ borderBottom: "1px dashed var(--border)" }}>
-        <span>column</span>
-        {childCount !== undefined && childCount > 0 && <span style={{ color: "var(--text-secondary)" }}>{childCount} card{childCount !== 1 ? "s" : ""}</span>}
-        <span style={{ color: "var(--green)" }}>editing</span>
-      </div>
-      <input
-        value={val}
-        onChange={(e) => setVal(e.target.value)}
-        onBlur={() => onSave({ text: val })}
-        onKeyDown={(e) => { if (e.key === "Enter") onSave({ text: val }); if (e.key === "Escape") onSave({ text: val }); }}
-        className="w-full px-3 py-2 font-display text-base focus:outline-none bg-transparent"
-        style={{ color: "var(--text-primary)" }}
-        autoFocus
-        placeholder="Column title..."
-      />
-    </div>
-  );
+
   return (
-    <div onClick={onStartEdit} className="w-full h-full flex flex-col rounded-lg overflow-hidden cursor-text" style={{ background: isDragOver ? "rgba(60,74,46,0.12)" : "transparent", border: isDragOver ? "2px solid var(--green)" : "1px dashed var(--border)", boxShadow: isDragOver ? "0 0 0 3px rgba(60,74,46,0.15), inset 0 0 20px rgba(60,74,46,0.05)" : "none", transition: "all 0.15s ease" }}>
-      <div className="mcard-head" style={{ borderBottom: "1px dashed var(--border)" }}>
-        <span>column</span>
-        {childCount !== undefined && childCount > 0 && <span style={{ color: "var(--text-secondary)" }}>{childCount} card{childCount !== 1 ? "s" : ""}</span>}
+    <div
+      className="w-full h-full flex flex-col rounded-lg overflow-hidden"
+      style={{
+        background: isDragOver ? "rgba(60,74,46,0.08)" : "var(--card-bg)",
+        border: isDragOver ? "2px solid var(--green)" : editing ? "2px solid var(--green)" : "1px solid var(--border)",
+        boxShadow: isDragOver ? "0 0 0 4px rgba(60,74,46,0.12), inset 0 0 30px rgba(60,74,46,0.04)" : "var(--card-shadow)",
+        transition: "all 0.15s ease",
+        minHeight: 120,
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div
+        className="flex items-center justify-between px-3 py-2 cursor-grab active:cursor-grabbing shrink-0"
+        style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}
+        onClick={(e) => { e.stopPropagation(); onStartEdit(); }}
+        draggable="false"
+      >
+        {editing ? (
+          <input
+            value={val}
+            onChange={(e) => setVal(e.target.value)}
+            onBlur={() => onSave({ text: val })}
+            onKeyDown={(e) => { if (e.key === "Enter") onSave({ text: val }); if (e.key === "Escape") onSave({ text: val }); }}
+            className="flex-1 font-display text-sm font-semibold focus:outline-none bg-transparent mr-2"
+            style={{ color: "var(--text-primary)" }}
+            autoFocus
+            placeholder="Column title..."
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <h3 className="font-display text-sm font-semibold truncate" style={{ color: "var(--text-primary)" }}>
+            {card.content?.text || <span style={{ color: "var(--text-secondary)" }} className="italic font-normal">Untitled</span>}
+          </h3>
+        )}
+        <span className="text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0" style={{ background: "var(--green-soft)", color: "var(--green)" }}>
+          {childCount || 0}
+        </span>
       </div>
-      <div className="px-3 py-2 flex-1">
-        <h3 className="font-display text-base" style={{ color: "var(--text-primary)" }}>{card.content?.text || <span style={{ color: "var(--text-secondary)" }} className="italic">Click to title...</span>}</h3>
+
+      <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-2 min-h-0">
+        {children}
       </div>
+
+      <button
+        className="w-full px-3 py-1.5 text-[11px] font-medium shrink-0 transition"
+        style={{ color: "var(--text-secondary)", borderTop: "1px solid var(--border)", background: "transparent" }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = "var(--green-soft)"; e.currentTarget.style.color = "var(--green)"; }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-secondary)"; }}
+        onClick={(e) => { e.stopPropagation(); onAddCard?.(); }}
+      >
+        + Add
+      </button>
     </div>
   );
 }
@@ -379,6 +405,84 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
             &times;
           </button>
         </>
+      )}
+    </div>
+  );
+}
+
+function ChildCard({ card, allCards, editingId, onStartEdit, onSave, onDelete }: {
+  card: CardData;
+  allCards: CardData[];
+  editingId: string | null;
+  onStartEdit: (id: string) => void;
+  onSave: (id: string, content: any) => void;
+  onDelete: (id: string) => void;
+}) {
+  const isEditing = editingId === card.id;
+
+  function renderChildVisual() {
+    switch (card.type) {
+      case "note":
+        return <EditableNote card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+      case "heading":
+        return <EditableHeading card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+      case "todo":
+        return <EditableTodo card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+      case "link":
+        return <EditableLink card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
+      case "image":
+        return (
+          <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)" }}>
+            <div className="mcard-head"><span><span className="rec-dot"></span>image</span></div>
+            <div className="flex-1 relative" style={{ background: "linear-gradient(135deg, var(--green-soft), var(--accent-soft))" }}>
+              {card.content?.url ? (
+                <SignedImg s3Key={card.content.url} alt={card.content.name || "Uploaded image"} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>No image</div>
+              )}
+            </div>
+          </div>
+        );
+      case "video":
+        return (
+          <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)" }}>
+            <div className="mcard-head"><span><span className="rec-dot"></span>video</span></div>
+            <div className="flex-1 bg-black relative">
+              {card.content?.embedUrl ? (
+                <iframe src={card.content.embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center" style={{ color: "var(--text-secondary)" }}>No video</div>
+              )}
+            </div>
+          </div>
+        );
+      case "color":
+        return (
+          <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)" }}>
+            <div className="mcard-head"><span>color</span></div>
+            <div className="flex-1" style={{ backgroundColor: card.content?.color || "#e8dfd3" }} />
+          </div>
+        );
+      default:
+        return <div className="text-xs p-3" style={{ color: "var(--text-secondary)" }}>Unknown</div>;
+    }
+  }
+
+  return (
+    <div
+      className={`relative group ${isEditing ? "z-10" : ""}`}
+      style={{ minHeight: 60 }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {renderChildVisual()}
+      {!isEditing && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
+          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-white text-[10px] opacity-0 group-hover:opacity-100 transition shadow flex items-center justify-center z-20"
+          style={{ background: "var(--accent)" }}
+        >
+          &times;
+        </button>
       )}
     </div>
   );
@@ -521,6 +625,12 @@ export default function BoardPage() {
   const [shareName, setShareName] = useState("");
   const [shareEmail, setShareEmail] = useState("");
   const [creatingShare, setCreatingShare] = useState(false);
+  const [showImageSearch, setShowImageSearch] = useState(false);
+  const [imageQuery, setImageQuery] = useState("");
+  const [imageResults, setImageResults] = useState<any[]>([]);
+  const [imageSearching, setImageSearching] = useState(false);
+  const [imagePage, setImagePage] = useState(1);
+  const [imageTotalPages, setImageTotalPages] = useState(0);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
@@ -591,6 +701,43 @@ export default function BoardPage() {
     if (!confirm("Revoke this share link?")) return;
     await fetch(`/api/shares/${shareId}`, { method: "DELETE" });
     setShares((prev) => prev.filter((s) => s.id !== shareId));
+  }
+
+  async function searchImages(query: string, page: number = 1) {
+    if (!query.trim()) return;
+    setImageSearching(true);
+    try {
+      const res = await fetch(`/api/images/search?q=${encodeURIComponent(query)}&page=${page}&per_page=20`);
+      const data = await res.json();
+      if (data.images) {
+        setImageResults((prev) => (page === 1 ? data.images : [...prev, ...data.images]));
+        setImagePage(page);
+        setImageTotalPages(data.totalPages || 0);
+      }
+    } catch {}
+    setImageSearching(false);
+  }
+
+  async function addImageToCanvas(image: any) {
+    const canvas = canvasRef.current;
+    let cx = 40 + cards.length * 20;
+    let cy = 40 + cards.length * 20;
+    if (canvas) {
+      const rect = canvas.getBoundingClientRect();
+      cx = Math.max(0, canvas.scrollLeft + rect.width / 2 - 160);
+      cy = Math.max(0, canvas.scrollTop + rect.height / 2 - 160);
+    }
+    const w = Math.min(320, image.width || 320);
+    const h = Math.round(w * (image.height / (image.width || 1)));
+    const res = await fetch("/api/cards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "image", content: { url: image.url, name: image.alt, unsplashId: image.id, author: image.author }, x: cx, y: cy, width: w, height: Math.min(h, 400), boardId: id }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setCards((prev) => [...prev, data.card]);
+    }
   }
 
   const handleDragMove = useCallback((event: DragMoveEvent) => {
@@ -849,6 +996,27 @@ export default function BoardPage() {
     createCard(type, type === "note" ? { text: "" } : type === "heading" ? { text: "" } : type === "todo" ? { items: [] } : type === "link" ? { url: "", label: "" } : {}, x, y);
   }
 
+  async function addCardToColumn(columnId: string) {
+    const col = cards.find((c) => c.id === columnId);
+    if (!col) return;
+    const children = cards.filter((c) => c.parentId === columnId);
+    const nextY = children.length > 0 ? Math.max(...children.map((c) => c.y + c.height)) + 10 : 10;
+    const res = await fetch("/api/cards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "note", content: { text: "" }, x: 10, y: nextY, width: 220, height: 120, boardId: id, parentId: columnId }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setCards((prev) => [...prev, data.card]);
+      const newMaxBottom = nextY + 120;
+      if (newMaxBottom > col.height) {
+        setCards((prev) => prev.map((c) => (c.id === columnId ? { ...c, height: Math.max(col.height, newMaxBottom + 48) } : c)));
+        await updateCard(columnId, { height: Math.max(col.height, newMaxBottom + 48) });
+      }
+    }
+  }
+
   async function deleteBoard() {
     await fetch(`/api/boards/${id}`, { method: "DELETE" });
     const projectId = board?.project?.id;
@@ -1096,18 +1264,69 @@ export default function BoardPage() {
                 className="board-canvas relative min-w-[200%] min-h-[200%] w-[4000px] h-[4000px]"
                 onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
               >
-                {cards.map((card) => (
-                  <DraggableCard
-                    key={card.id}
-                    card={card}
-                    allCards={cards}
-                    onDelete={deleteCard}
-                    editingId={editingId}
-                    onStartEdit={setEditingId}
-                    onSave={handleSaveCard}
-                    isDragOver={dragOverColumnId === card.id}
-                  />
-                ))}
+                {(() => {
+                  const columnIds = new Set(cards.filter((c) => c.type === "column").map((c) => c.id));
+                  const freeCards = cards.filter((c) => !c.parentId);
+                  const columns = cards.filter((c) => c.type === "column");
+                  return (
+                    <>
+                      {freeCards.map((card) => (
+                        <DraggableCard
+                          key={card.id}
+                          card={card}
+                          allCards={cards}
+                          onDelete={deleteCard}
+                          editingId={editingId}
+                          onStartEdit={setEditingId}
+                          onSave={handleSaveCard}
+                          isDragOver={dragOverColumnId === card.id}
+                        />
+                      ))}
+
+                      {columns.map((col) => {
+                        const children = cards.filter((c) => c.parentId === col.id);
+                        const isEditing = editingId === col.id;
+                        return (
+                          <div
+                            key={col.id}
+                            style={{
+                              position: "absolute",
+                              left: col.x,
+                              top: col.y,
+                              width: col.width,
+                              height: col.height,
+                              zIndex: editingId === col.id ? 999 : col.zIndex,
+                            }}
+                            className={`group ${isEditing ? "z-50" : ""}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <EditableColumn
+                              card={col}
+                              editing={isEditing}
+                              onStartEdit={() => setEditingId(col.id)}
+                              onSave={(content) => handleSaveCard(col.id, content)}
+                              childCount={children.length}
+                              isDragOver={dragOverColumnId === col.id}
+                              onAddCard={() => addCardToColumn(col.id)}
+                            >
+                              {children.map((child) => (
+                                <ChildCard
+                                  key={child.id}
+                                  card={child}
+                                  allCards={cards}
+                                  editingId={editingId}
+                                  onStartEdit={setEditingId}
+                                  onSave={handleSaveCard}
+                                  onDelete={deleteCard}
+                                />
+                              ))}
+                            </EditableColumn>
+                          </div>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
               </div>
             </DndContext>
 

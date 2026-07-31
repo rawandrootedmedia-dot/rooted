@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { DndContext, useDraggable, PointerSensor, useSensor, useSensors, type DragEndEvent, type DragMoveEvent } from "@dnd-kit/core";
+import { ShotList, Storyboard, ScheduleBudget, ContentCalendar, ProofSheet } from "@/components/shots";
 
 type CardData = {
   id: string;
@@ -512,26 +513,32 @@ function ChildCard({ card, allCards, editingId, onStartEdit, onSave, onDelete, o
   );
 }
 
-function ImageSearchPanel({ onAdd, onClose }: { onAdd: (image: any) => void; onClose: () => void }) {
+function ImageSearchPanel({ onAdd, onClose, onUpload }: { onAdd: (image: any) => void; onClose: () => void; onUpload: () => void }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
+  const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [draggingImg, setDraggingImg] = useState<any>(null);
 
   async function search(q: string, p: number = 1) {
     if (!q.trim()) return;
     setSearching(true);
+    setError("");
     try {
       const res = await fetch(`/api/images/search?q=${encodeURIComponent(q)}&page=${p}&per_page=20`);
       const data = await res.json();
-      if (data.images) {
+      if (data.error) {
+        setError(data.error);
+        setResults([]);
+      } else if (data.images) {
         setResults((prev) => (p === 1 ? data.images : [...prev, ...data.images]));
         setPage(p);
         setTotalPages(data.totalPages || 0);
       }
-    } catch {}
+    } catch {
+      setError("Failed to search images");
+    }
     setSearching(false);
   }
 
@@ -546,9 +553,20 @@ function ImageSearchPanel({ onAdd, onClose }: { onAdd: (image: any) => void; onC
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
-        <h3 className="font-display text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Image Search</h3>
+        <h3 className="font-display text-sm font-semibold" style={{ color: "var(--text-primary)" }}>Add Image</h3>
         <button onClick={onClose} className="p-1 rounded transition" style={{ color: "var(--text-secondary)" }}>
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <div className="px-4 py-3 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
+        <button
+          onClick={onUpload}
+          className="w-full px-3 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
+          style={{ border: "1px dashed var(--border)", color: "var(--text-primary)", background: "var(--bg-secondary)" }}
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" /></svg>
+          Upload from computer
         </button>
       </div>
 
@@ -561,7 +579,6 @@ function ImageSearchPanel({ onAdd, onClose }: { onAdd: (image: any) => void; onC
             placeholder="Search Unsplash..."
             className="flex-1 px-3 py-1.5 text-sm rounded-lg focus:outline-none"
             style={{ border: "1px solid var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)" }}
-            autoFocus
           />
           <button
             onClick={() => { setResults([]); search(query, 1); }}
@@ -572,14 +589,20 @@ function ImageSearchPanel({ onAdd, onClose }: { onAdd: (image: any) => void; onC
             {searching ? "..." : "Search"}
           </button>
         </div>
-        <p className="text-[10px] mt-2 font-mono" style={{ color: "var(--text-secondary)" }}>Powered by Unsplash</p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {results.length === 0 && !searching && (
+        {error && (
+          <div className="p-3 rounded-lg text-sm mb-3" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent)" }}>
+            {error}
+            <p className="text-[10px] mt-1 font-mono opacity-70">Set UNSPLASH_ACCESS_KEY in your Dailey OS project to enable search.</p>
+          </div>
+        )}
+
+        {results.length === 0 && !searching && !error && (
           <div className="h-full flex flex-col items-center justify-center text-center">
             <svg className="w-10 h-10 mb-3" style={{ color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" /></svg>
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Search for images to add to your board</p>
+            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Search for images or upload from your computer</p>
           </div>
         )}
 
@@ -596,27 +619,18 @@ function ImageSearchPanel({ onAdd, onClose }: { onAdd: (image: any) => void; onC
                 key={img.id}
                 className="relative group rounded-lg overflow-hidden cursor-pointer"
                 style={{ aspectRatio: `${img.width}/${img.height}` }}
-                draggable
-                onDragStart={(e) => {
-                  e.dataTransfer.setData("application/json", JSON.stringify(img));
-                  e.dataTransfer.effectAllowed = "copy";
-                  setDraggingImg(img);
-                }}
-                onDragEnd={() => setDraggingImg(null)}
                 onClick={() => onAdd(img)}
               >
                 <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" loading="lazy" />
                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-end justify-between p-1.5 opacity-0 group-hover:opacity-100">
                   <span className="text-[9px] text-white font-mono truncate">{img.author}</span>
-                  <div className="flex gap-1">
-                    <button
-                      className="px-1.5 py-0.5 rounded text-[9px] font-medium text-white transition"
-                      style={{ background: "var(--green)" }}
-                      onClick={(e) => { e.stopPropagation(); onAdd(img); }}
-                    >
-                      + Add
-                    </button>
-                  </div>
+                  <button
+                    className="px-1.5 py-0.5 rounded text-[9px] font-medium text-white transition"
+                    style={{ background: "var(--green)" }}
+                    onClick={(e) => { e.stopPropagation(); onAdd(img); }}
+                  >
+                    + Add
+                  </button>
                 </div>
               </div>
             ))}
@@ -756,6 +770,12 @@ const TOOLBAR_ITEMS = [
   { type: "image", icon: "M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z", label: "Image" },
   { type: "video", icon: "M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM15.75 16.5a12.015 12.015 0 00-7.5 0m11.25-1.5a12.015 12.015 0 00-7.5-2.25m-7.5 9.75h15a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5h-15A1.5 1.5 0 003.75 6v12a1.5 1.5 0 001.5 1.5z", label: "Video" },
   { type: "column", icon: "M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 8a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zm12 0a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z", label: "Column" },
+  { type: "divider", icon: "", label: "" },
+  { type: "shotlist", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01", label: "Shot List" },
+  { type: "storyboard", icon: "M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z", label: "Storyboard" },
+  { type: "schedule", icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", label: "Schedule" },
+  { type: "calendar", icon: "M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5", label: "Calendar" },
+  { type: "proof", icon: "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z", label: "Proof Sheet" },
 ];
 
 export default function BoardPage() {
@@ -774,6 +794,7 @@ export default function BoardPage() {
   const [dragOverColumnId, setDragOverColumnId] = useState<string | null>(null);
   const [resizingId, setResizingId] = useState<string | null>(null);
   const [resizeStart, setResizeStart] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+  const [activeShotTool, setActiveShotTool] = useState<string | null>(null);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
   const [templateName, setTemplateName] = useState("");
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -1091,7 +1112,11 @@ export default function BoardPage() {
 
   function handleToolbarClick(type: string) {
     if (type === "image") {
-      setShowImageSearch(true);
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.onchange = (e) => handleFileUpload(e as any, "image");
+      input.click();
       return;
     }
     if (type === "video") {
@@ -1104,6 +1129,10 @@ export default function BoardPage() {
     }
     if (type === "column") {
       createCard("column", { text: "" }, undefined, undefined);
+      return;
+    }
+    if (type === "shotlist" || type === "storyboard" || type === "schedule" || type === "calendar" || type === "proof") {
+      setActiveShotTool(type);
       return;
     }
     createCard(type, type === "note" ? { text: "" } : type === "heading" ? { text: "" } : type === "todo" ? { items: [] } : type === "link" ? { url: "", label: "" } : {});
@@ -1229,6 +1258,14 @@ export default function BoardPage() {
         <ImageSearchPanel
           onAdd={(img) => { addImageToCanvas(img); setShowImageSearch(false); }}
           onClose={() => setShowImageSearch(false)}
+          onUpload={() => {
+            const input = document.createElement("input");
+            input.type = "file";
+            input.accept = "image/*";
+            input.onchange = (e) => handleFileUpload(e as any, "image");
+            input.click();
+            setShowImageSearch(false);
+          }}
         />
       )}
 
@@ -1533,24 +1570,29 @@ export default function BoardPage() {
               </div>
             </DndContext>
 
-            <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1.5">
-              {TOOLBAR_ITEMS.map((item) => (
-                <div key={item.type} className="relative group/tool">
-                  <button
-                    draggable
-                    onDragStart={(e) => { setDragType(item.type); e.dataTransfer.setData("text/plain", item.type); }}
-                    onDragEnd={() => setDragType(null)}
-                    onClick={(e) => { e.stopPropagation(); handleToolbarClick(item.type); }}
-                    className="toolbar-btn"
-                    title={item.label}
-                  >
-                    <svg className="w-5 h-5" style={{ color: "var(--text-primary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} /></svg>
-                  </button>
-                  <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/tool:opacity-100 transition pointer-events-none font-mono" style={{ background: "var(--green)", color: "#fff" }}>
-                    {item.label}
-                  </span>
-                </div>
-              ))}
+            <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1.5 p-2 rounded-xl" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
+              {TOOLBAR_ITEMS.map((item) => {
+                if (item.type === "divider") {
+                  return <div key="divider" className="toolbar-divider" />;
+                }
+                return (
+                  <div key={item.type} className="relative group/tool">
+                    <button
+                      draggable
+                      onDragStart={(e) => { setDragType(item.type); e.dataTransfer.setData("text/plain", item.type); }}
+                      onDragEnd={() => setDragType(null)}
+                      onClick={(e) => { e.stopPropagation(); handleToolbarClick(item.type); }}
+                      className="toolbar-btn"
+                      title={item.label}
+                    >
+                      <svg className="w-6 h-6" style={{ color: "var(--text-primary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} /></svg>
+                    </button>
+                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/tool:opacity-100 transition pointer-events-none font-mono" style={{ background: "var(--green)", color: "#fff" }}>
+                      {item.label}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </>
         )}

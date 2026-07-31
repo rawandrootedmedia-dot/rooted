@@ -139,9 +139,9 @@ body {
 
 /* Toolbar */
 .toolbar-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -153,13 +153,20 @@ body {
 }
 
 .toolbar-btn:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
   box-shadow: var(--card-shadow-hover);
   border-color: var(--accent);
 }
 
 .toolbar-btn:active {
   cursor: grabbing;
+}
+
+.toolbar-divider {
+  width: 28px;
+  height: 1px;
+  margin: 4px auto;
+  background: var(--border);
 }
 
 /* Connect handle on cards */

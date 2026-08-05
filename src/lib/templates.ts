@@ -387,23 +387,23 @@ export const TEMPLATES: BoardTemplate[] = [
       {
         type: "calendar",
         content: { month: new Date().getMonth(), year: new Date().getFullYear(), days: {} },
-        x: 40, y: 440, width: 840, height: 680,
+        x: 40, y: 440, width: 1000, height: 800,
         locked: true,
       },
       {
         type: "note",
         content: { text: "## Key Dates\n• Post shoot:\n• Edit review:\n• Client approval:\n• First post:\n• Campaign end:" },
-        x: 940, y: 440, width: 220, height: 210,
+        x: 1060, y: 440, width: 220, height: 210,
       },
       {
         type: "todo",
         content: { items: ["Write captions for Week 1", "Schedule photo shoots", "Prepare story templates", "Confirm client approvals", "Review analytics"] },
-        x: 940, y: 680, width: 220, height: 240,
+        x: 1060, y: 680, width: 220, height: 240,
       },
       {
         type: "note",
         content: { text: "## Hashtags\nPrimary:\nSecondary:\nBranded:\nKeywords:" },
-        x: 940, y: 940, width: 220, height: 170,
+        x: 1060, y: 940, width: 220, height: 170,
       },
     ],
   },

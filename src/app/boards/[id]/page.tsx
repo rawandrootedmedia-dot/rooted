@@ -1274,8 +1274,11 @@ export default function BoardPage() {
       let storeY = newAbsY;
       if (targetColumnId) {
         const col = cards.find((c) => c.id === targetColumnId)!;
-        storeX = newAbsX - col.x;
-        storeY = newAbsY - col.y;
+        const existingChildren = cards.filter((c) => c.parentId === targetColumnId && c.id !== cardId);
+        const maxChildBottom = existingChildren.reduce((max, c) => Math.max(max, c.y + c.height), 0);
+        const parentContentBottom = Math.max(col.height, maxChildBottom);
+        storeX = Math.max(8, (col.width - card.width) / 2);
+        storeY = parentContentBottom + 8;
       }
 
       setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, x: storeX, y: storeY, parentId: targetColumnId } : c)));

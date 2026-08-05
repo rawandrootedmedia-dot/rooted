@@ -127,9 +127,11 @@ function EditableCalendar({ card, onSave }: { card: CardData; onSave: (content: 
 
   const daysInMonth = getDaysInMonth(month, year);
   const firstDay = getFirstDayOfWeek(month, year);
+  const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
   const cells: (number | null)[] = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
   for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+  while (cells.length < totalCells) cells.push(null);
 
   function setMonth(m: number) {
     let y = year;
@@ -138,12 +140,10 @@ function EditableCalendar({ card, onSave }: { card: CardData; onSave: (content: 
     onSave({ month: m, year: y });
   }
 
-  const colW = 100 / 7;
-
   return (
     <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
-      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
-        <button onClick={() => setMonth(month - 1)} className="p-1 rounded hover:bg-black/5 transition text-sm" style={{ color: "var(--text-secondary)" }}>&lsaquo;</button>
+      <div className="flex items-center justify-between px-3 py-2 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
+        <button onClick={() => setMonth(month - 1)} className="p-1 rounded hover:bg-black/5 transition text-lg font-bold" style={{ color: "var(--text-secondary)" }}>&lsaquo;</button>
         <div className="flex items-center gap-2">
           <select
             value={month}
@@ -162,28 +162,30 @@ function EditableCalendar({ card, onSave }: { card: CardData; onSave: (content: 
             {Array.from({ length: 11 }, (_, i) => year - 5 + i).map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
-        <button onClick={() => setMonth(month + 1)} className="p-1 rounded hover:bg-black/5 transition text-sm" style={{ color: "var(--text-secondary)" }}>&rsaquo;</button>
+        <button onClick={() => setMonth(month + 1)} className="p-1 rounded hover:bg-black/5 transition text-lg font-bold" style={{ color: "var(--text-secondary)" }}>&rsaquo;</button>
       </div>
-      <div className="flex" style={{ borderBottom: "1px solid var(--border)" }}>
+      <div className="grid grid-cols-7 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
         {WEEKDAYS.map((d) => (
-          <div key={d} className="text-center py-1 font-mono text-[10px] uppercase tracking-wider" style={{ width: `${colW}%`, color: "var(--text-secondary)" }}>{d}</div>
+          <div key={d} className="text-center py-1.5 font-mono text-[10px] uppercase tracking-wider" style={{ color: "var(--text-secondary)" }}>{d}</div>
         ))}
       </div>
-      <div className="flex-1 flex flex-wrap">
-        {cells.map((day, i) => (
-          <div
-            key={i}
-            className="flex items-start justify-start p-1"
-            style={{
-              width: `${colW}%`,
-              aspectRatio: "1 / 0.8",
-              borderBottom: (i >= cells.length - (cells.length % 7) && cells.length % 7 !== 0) || i >= cells.length - 7 ? "none" : "1px solid var(--border)",
-              borderRight: (i + 1) % 7 === 0 ? "none" : "1px solid var(--border)",
-            }}
-          >
-            {day && <span className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{day}</span>}
-          </div>
-        ))}
+      <div className="grid grid-cols-7 flex-1">
+        {cells.map((day, i) => {
+          const isLastRow = i >= totalCells - 7;
+          const isLastCol = (i + 1) % 7 === 0;
+          return (
+            <div
+              key={i}
+              className="flex items-start justify-start p-1.5"
+              style={{
+                borderBottom: isLastRow ? "none" : "1px solid var(--border)",
+                borderRight: isLastCol ? "none" : "1px solid var(--border)",
+              }}
+            >
+              {day && <span className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{day}</span>}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

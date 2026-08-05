@@ -115,6 +115,80 @@ function EditableNote({ card, editing, onStartEdit, onSave }: EditableCardProps)
   );
 }
 
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+const WEEKDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+function EditableCalendar({ card, onSave }: { card: CardData; onSave: (content: any) => void }) {
+  const month = card.content?.month ?? new Date().getMonth();
+  const year = card.content?.year ?? new Date().getFullYear();
+
+  function getDaysInMonth(m: number, y: number) { return new Date(y, m + 1, 0).getDate(); }
+  function getFirstDayOfWeek(m: number, y: number) { return new Date(y, m, 1).getDay(); }
+
+  const daysInMonth = getDaysInMonth(month, year);
+  const firstDay = getFirstDayOfWeek(month, year);
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDay; i++) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+
+  function setMonth(m: number) {
+    let y = year;
+    if (m > 11) { m = 0; y++; }
+    if (m < 0) { m = 11; y--; }
+    onSave({ month: m, year: y });
+  }
+
+  const colW = 100 / 7;
+
+  return (
+    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
+      <div className="flex items-center justify-between px-3 py-2" style={{ borderBottom: "1px solid var(--border)" }}>
+        <button onClick={() => setMonth(month - 1)} className="p-1 rounded hover:bg-black/5 transition text-sm" style={{ color: "var(--text-secondary)" }}>&lsaquo;</button>
+        <div className="flex items-center gap-2">
+          <select
+            value={month}
+            onChange={(e) => onSave({ month: Number(e.target.value), year })}
+            className="text-sm font-medium bg-transparent border-none outline-none cursor-pointer"
+            style={{ color: "var(--text-primary)" }}
+          >
+            {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+          </select>
+          <select
+            value={year}
+            onChange={(e) => onSave({ month, year: Number(e.target.value) })}
+            className="text-sm bg-transparent border-none outline-none cursor-pointer"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            {Array.from({ length: 11 }, (_, i) => year - 5 + i).map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+        <button onClick={() => setMonth(month + 1)} className="p-1 rounded hover:bg-black/5 transition text-sm" style={{ color: "var(--text-secondary)" }}>&rsaquo;</button>
+      </div>
+      <div className="flex" style={{ borderBottom: "1px solid var(--border)" }}>
+        {WEEKDAYS.map((d) => (
+          <div key={d} className="text-center py-1 font-mono text-[10px] uppercase tracking-wider" style={{ width: `${colW}%`, color: "var(--text-secondary)" }}>{d}</div>
+        ))}
+      </div>
+      <div className="flex-1 flex flex-wrap">
+        {cells.map((day, i) => (
+          <div
+            key={i}
+            className="flex items-start justify-start p-1"
+            style={{
+              width: `${colW}%`,
+              aspectRatio: "1 / 0.8",
+              borderBottom: (i >= cells.length - (cells.length % 7) && cells.length % 7 !== 0) || i >= cells.length - 7 ? "none" : "1px solid var(--border)",
+              borderRight: (i + 1) % 7 === 0 ? "none" : "1px solid var(--border)",
+            }}
+          >
+            {day && <span className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{day}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EditableHeading({ card, editing, onStartEdit, onSave }: EditableCardProps) {
   const [val, setVal] = useState(card.content?.text || "");
   useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
@@ -378,6 +452,8 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
         return <EditableLink card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} />;
       case "column":
         return <EditableColumn card={card} editing={isEditing} onStartEdit={() => onStartEdit(card.id)} onSave={(content) => onSave(card.id, content)} childCount={allCards.filter((c) => c.parentId === card.id).length} isDragOver={isDragOver} />;
+      case "calendar":
+        return <EditableCalendar card={card} onSave={(content) => onSave(card.id, content)} />;
       case "color":
         return (
           <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
@@ -466,6 +542,8 @@ function ChildCard({ card, allCards, editingId, onStartEdit, onSave, onDelete, o
             </div>
           </div>
         );
+      case "calendar":
+        return <EditableCalendar card={card} onSave={(content) => onSave(card.id, content)} />;
       case "video":
         return (
           <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)" }}>
@@ -1191,6 +1269,11 @@ export default function BoardPage() {
     }
     if (type === "column") {
       createCard("column", { text: "" }, undefined, undefined);
+      return;
+    }
+    if (type === "calendar") {
+      const now = new Date();
+      createCard("calendar", { month: now.getMonth(), year: now.getFullYear() }, undefined, undefined);
       return;
     }
     createCard(type, type === "note" ? { text: "" } : type === "heading" ? { text: "" } : type === "todo" ? { items: [] } : type === "link" ? { url: "", label: "" } : {});

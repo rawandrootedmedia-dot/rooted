@@ -1247,16 +1247,35 @@ export default function BoardPage() {
   }
 
   async function addImageToCanvas(image: any) {
-    const canvas = canvasRef.current;
-    let cx = 40 + cards.length * 20;
-    let cy = 40 + cards.length * 20;
-    if (canvas) {
-      const rect = canvas.getBoundingClientRect();
-      cx = Math.max(0, canvas.scrollLeft + rect.width / 2 - 160);
-      cy = Math.max(0, canvas.scrollTop + rect.height / 2 - 160);
-    }
     const w = Math.min(320, image.width || 320);
     const h = Math.round(w * (image.height / (image.width || 1)));
+
+    const COL_W = 360;
+    const ROW_H = 280;
+    const MARGIN = 40;
+    const cols = 4;
+
+    const occupied = cards.map((c) => ({
+      x: c.parentId ? (cards.find((p) => p.id === c.parentId)?.x ?? 0) + c.x : c.x,
+      y: c.parentId ? (cards.find((p) => p.id === c.parentId)?.y ?? 0) + c.y : c.y,
+      w: c.width,
+      h: c.height,
+    }));
+
+    let cx = MARGIN;
+    let cy = MARGIN;
+    let placed = false;
+    for (let row = 0; !placed; row++) {
+      for (let col = 0; col < cols; col++) {
+        const tryX = MARGIN + col * COL_W;
+        const tryY = MARGIN + row * ROW_H;
+        const overlaps = occupied.some(
+          (o) => tryX < o.x + o.w && tryX + w > o.x && tryY < o.y + o.h && tryY + h > o.y
+        );
+        if (!overlaps) { cx = tryX; cy = tryY; placed = true; break; }
+      }
+    }
+
     const res = await fetch("/api/cards", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1414,18 +1433,39 @@ export default function BoardPage() {
 
   async function createCard(type: string, content: any, x?: number, y?: number, locked?: boolean) {
     const canvas = canvasRef.current;
-    let cx = 40 + cards.length * 20;
-    let cy = 40 + cards.length * 20;
+    const w = type === "image" ? 320 : type === "video" ? 400 : type === "color" ? 200 : type === "column" ? 240 : type === "calendar" ? 1000 : 260;
+    const h = type === "image" ? 320 : type === "video" ? 260 : type === "color" ? 200 : type === "heading" ? 80 : type === "column" ? 480 : type === "calendar" ? 800 : 200;
+    const MARGIN = 40;
+
+    let cx = MARGIN;
+    let cy = MARGIN;
+
     if (x !== undefined && y !== undefined) {
-      cx = Math.max(0, x - 130);
-      cy = Math.max(0, y - 50);
-    } else if (canvas) {
-      const rect = canvas.getBoundingClientRect();
-      cx = Math.max(0, canvas.scrollLeft + rect.width / 2 - 130);
-      cy = Math.max(0, canvas.scrollTop + rect.height / 2 - 100);
+      cx = Math.max(0, x - w / 2);
+      cy = Math.max(0, y - h / 2);
+    } else {
+      const COL_W = 300;
+      const ROW_H = 240;
+      const cols = 4;
+
+      const occupied = cards.map((c) => ({
+        x: c.parentId ? (cards.find((p) => p.id === c.parentId)?.x ?? 0) + c.x : c.x,
+        y: c.parentId ? (cards.find((p) => p.id === c.parentId)?.y ?? 0) + c.y : c.y,
+        w: c.width,
+        h: c.height,
+      }));
+
+      outer: for (let row = 0; ; row++) {
+        for (let col = 0; col < cols; col++) {
+          const tryX = MARGIN + col * COL_W;
+          const tryY = MARGIN + row * ROW_H;
+          const overlaps = occupied.some(
+            (o) => tryX < o.x + o.w && tryX + w > o.x && tryY < o.y + o.h && tryY + h > o.y
+          );
+          if (!overlaps) { cx = tryX; cy = tryY; break outer; }
+        }
+      }
     }
-    const w = type === "image" ? 320 : type === "video" ? 400 : type === "color" ? 200 : type === "column" ? 240 : 260;
-    const h = type === "image" ? 320 : type === "video" ? 260 : type === "color" ? 200 : type === "heading" ? 80 : type === "column" ? 480 : 200;
 
     const res = await fetch("/api/cards", {
       method: "POST",

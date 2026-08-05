@@ -37,8 +37,8 @@ function SignedImg({ s3Key, alt, className }: { s3Key: string; alt: string; clas
 
   if (!url) {
     return (
-      <div className={`w-full h-full flex items-center justify-center bg-bone-100 dark:bg-charcoal-800 ${className || ""}`}>
-        <div className="w-6 h-6 rounded-full border-2 border-clay-300 border-t-transparent animate-spin" />
+      <div className={`w-full h-full flex items-center justify-center ${className || ""}`} style={{ background: "var(--bg-secondary)" }}>
+        <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--green)", borderTopColor: "transparent" }} />
       </div>
     );
   }
@@ -995,37 +995,38 @@ function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
-      <div className="bg-white dark:bg-charcoal-900 rounded-2xl border border-sage-200 dark:border-charcoal-700 shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-auto m-4" onClick={(e) => e.stopPropagation()}>
-        <div className="p-6 border-b border-sage-200 dark:border-charcoal-700 flex items-center justify-between">
+      <div className="rounded-2xl shadow-2xl w-full max-w-3xl max-h-[80vh] overflow-auto m-4" style={{ background: "var(--card-bg)", border: "1px solid var(--border)" }} onClick={(e) => e.stopPropagation()}>
+        <div className="p-6 border-b flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
           <div>
-            <h2 className="font-serif text-2xl text-clay-800 dark:text-clay-200">Board Templates</h2>
-            <p className="text-sm text-charcoal-500 dark:text-charcoal-400 mt-1">Start with a pre-built layout or keep it blank</p>
+            <h2 className="font-display text-2xl" style={{ color: "var(--text-primary)" }}>Board Templates</h2>
+            <p className="text-sm mt-1" style={{ color: "var(--text-secondary)" }}>Start with a pre-built layout or keep it blank</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-sage-100 dark:hover:bg-charcoal-800 text-charcoal-500 transition">
+          <button onClick={onClose} className="p-2 rounded-lg transition" style={{ color: "var(--text-secondary)" }}>
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </div>
         <div className="p-6 space-y-6">
           {custom.length > 0 && (
             <div>
-              <h3 className="text-sm font-medium text-charcoal-600 dark:text-charcoal-400 mb-3">My Templates</h3>
+              <h3 className="text-sm font-medium mb-3" style={{ color: "var(--text-secondary)" }}>My Templates</h3>
               <div className="grid gap-3 sm:grid-cols-3">
                 {custom.map((t) => (
-                  <div key={t.id} className="text-left p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 hover:border-sage-400 dark:hover:border-sage-600 bg-bone-50 dark:bg-charcoal-800 transition group relative">
+                  <div key={t.id} className="text-left p-4 rounded-xl transition group relative" style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteCustomTemplate(t); }}
                       disabled={deleting === t.id}
-                      className="absolute top-2 right-2 p-1 rounded-md opacity-0 group-hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-900/30 text-charcoal-400 hover:text-red-600 transition"
+                      className="absolute top-2 right-2 p-1 rounded-md opacity-0 group-hover:opacity-100 transition"
+                      style={{ color: "var(--text-secondary)" }}
                       title="Delete template"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                     <button onClick={() => applyTemplate(t, true)} disabled={applying === t.id} className="w-full">
-                      <div className="w-10 h-10 rounded-lg bg-sage-100 dark:bg-sage-900/30 flex items-center justify-center text-sage-600 dark:text-sage-400 mb-3">
+                      <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--green-soft)", color: "var(--green)" }}>
                         {TEMPLATE_ICONS[t.icon] || TEMPLATE_ICONS.clipboard}
                       </div>
-                      <h3 className="font-medium text-charcoal-900 dark:text-bone-100 text-sm">{t.name}</h3>
-                      {applying === t.id && <p className="text-xs text-sage-600 mt-2">Applying...</p>}
+                      <h3 className="font-medium text-sm" style={{ color: "var(--text-primary)" }}>{t.name}</h3>
+                      {applying === t.id && <p className="text-xs mt-2" style={{ color: "var(--green)" }}>Applying...</p>}
                     </button>
                   </div>
                 ))}
@@ -1033,31 +1034,32 @@ function TemplatePicker({ onSelect, onClose, boardId }: { onSelect: (templateId:
             </div>
           )}
           <div>
-            <h3 className="text-sm font-medium text-charcoal-600 dark:text-charcoal-400 mb-3">Built-in Templates</h3>
+            <h3 className="text-sm font-medium mb-3" style={{ color: "var(--text-secondary)" }}>Built-in Templates</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               {builtIn.map((t) => (
                 <button
                   key={t.id}
                   onClick={() => applyTemplate(t)}
                   disabled={applying === t.id}
-                  className="text-left p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 hover:border-sage-400 dark:hover:border-sage-600 bg-bone-50 dark:bg-charcoal-800 transition group disabled:opacity-50"
+                  className="text-left p-4 rounded-xl transition group disabled:opacity-50"
+                  style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)" }}
                 >
-                  <div className="w-10 h-10 rounded-lg bg-clay-100 dark:bg-clay-900/30 flex items-center justify-center text-clay-600 dark:text-clay-400 mb-3 group-hover:scale-105 transition">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3 group-hover:scale-105 transition" style={{ background: "var(--accent-soft)", color: "var(--accent)" }}>
                     {TEMPLATE_ICONS[t.icon] || TEMPLATE_ICONS.document}
                   </div>
-                  <h3 className="font-medium text-charcoal-900 dark:text-bone-100 text-sm">{t.name}</h3>
-                  <p className="text-xs text-charcoal-500 dark:text-charcoal-400 mt-1">{t.description}</p>
-                  {applying === t.id && <p className="text-xs text-sage-600 mt-2">Applying...</p>}
+                  <h3 className="font-medium text-sm" style={{ color: "var(--text-primary)" }}>{t.name}</h3>
+                  <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>{t.description}</p>
+                  {applying === t.id && <p className="text-xs mt-2" style={{ color: "var(--green)" }}>Applying...</p>}
                 </button>
               ))}
             </div>
           </div>
-          <button onClick={onClose} className="w-full text-left p-4 rounded-xl border-2 border-dashed border-sage-300 dark:border-charcoal-600 hover:border-sage-400 dark:hover:border-sage-500 bg-transparent transition group">
-            <div className="w-10 h-10 rounded-lg bg-bone-200 dark:bg-charcoal-700 flex items-center justify-center text-charcoal-400 mb-3">
+          <button onClick={onClose} className="w-full text-left p-4 rounded-xl border-2 border-dashed transition group" style={{ borderColor: "var(--border)" }}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "var(--bg-secondary)", color: "var(--text-secondary)" }}>
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
             </div>
-            <h3 className="font-medium text-charcoal-700 dark:text-bone-300 text-sm">Blank Board</h3>
-            <p className="text-xs text-charcoal-400 mt-1">Start with an empty canvas</p>
+            <h3 className="font-medium text-sm" style={{ color: "var(--text-primary)" }}>Blank Board</h3>
+            <p className="text-xs mt-1" style={{ color: "var(--text-secondary)" }}>Start with an empty canvas</p>
           </button>
         </div>
       </div>
@@ -1807,19 +1809,22 @@ export default function BoardPage() {
             <div className="flex items-center gap-2 ml-2">
               <span className="text-xs text-red-600 font-medium">Delete this board?</span>
               <button onClick={deleteBoard} className="px-2 py-1 rounded bg-red-600 text-white text-xs font-medium hover:bg-red-700 transition">Yes, delete</button>
-              <button onClick={() => setConfirmDelete(false)} className="px-2 py-1 rounded border border-sage-300 dark:border-charcoal-600 text-xs text-charcoal-600 dark:text-charcoal-400 hover:bg-sage-50 dark:hover:bg-charcoal-800 transition">Cancel</button>
+              <button onClick={() => setConfirmDelete(false)} className="px-2 py-1 rounded text-xs transition" style={{ border: "1px solid var(--border)", color: "var(--text-secondary)" }}>Cancel</button>
             </div>
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
               title="Delete board"
-              className="p-1.5 rounded-lg text-charcoal-300 dark:text-charcoal-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+              className="p-1.5 rounded-lg transition"
+              style={{ color: "var(--text-secondary)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "var(--accent)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "var(--text-secondary)"; }}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </button>
           )}
           {board.project && (
-            <span className="text-xs text-charcoal-400 hidden sm:inline">
+            <span className="text-xs hidden sm:inline" style={{ color: "var(--text-secondary)" }}>
               {board.project.title} &middot; {board.project.client?.name}
             </span>
           )}
@@ -1856,16 +1861,17 @@ export default function BoardPage() {
       </div>
 
       {showVideoInput && (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-sage-200 dark:border-charcoal-700 bg-bone-50 dark:bg-charcoal-900">
+        <div className="flex items-center gap-2 px-4 py-2 border-b" style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}>
           <input
             value={videoUrl}
             onChange={(e) => setVideoUrl(e.target.value)}
             placeholder="YouTube or Vimeo URL"
-            className="flex-1 max-w-md px-3 py-1.5 text-sm rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-charcoal-900 dark:text-bone-100 focus:outline-none focus:ring-1 focus:ring-sage-400"
+            className="flex-1 max-w-md px-3 py-1.5 text-sm rounded-lg focus:outline-none"
+            style={{ border: "1px solid var(--border)", background: "var(--card-bg)", color: "var(--text-primary)" }}
             onKeyDown={(e) => e.key === "Enter" && handleVideoEmbed()}
           />
-          <button onClick={handleVideoEmbed} className="px-3 py-1.5 rounded-lg bg-sage-600 hover:bg-sage-700 text-white text-sm font-medium transition">Embed</button>
-          <button onClick={() => { setShowVideoInput(false); setVideoUrl(""); }} className="px-3 py-1.5 rounded-lg text-charcoal-400 hover:text-charcoal-600 text-sm">Cancel</button>
+          <button onClick={handleVideoEmbed} className="px-3 py-1.5 rounded-lg text-white text-sm font-medium transition" style={{ background: "var(--green)" }}>Embed</button>
+          <button onClick={() => { setShowVideoInput(false); setVideoUrl(""); }} className="px-3 py-1.5 rounded-lg text-sm" style={{ color: "var(--text-secondary)" }}>Cancel</button>
         </div>
       )}
 

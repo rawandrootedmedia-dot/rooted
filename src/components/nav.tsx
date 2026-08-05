@@ -20,31 +20,25 @@ export function Nav({ userName }: { userName?: string | null }) {
   }
 
   return (
-    <nav className="border-b border-sage-200 dark:border-charcoal-700 bg-white/80 dark:bg-charcoal-950/80 backdrop-blur-sm sticky top-0 z-50">
+    <nav className="border-b backdrop-blur-sm sticky top-0 z-50" style={{ borderColor: "var(--border)", background: "var(--bg-primary)" }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="font-serif text-2xl font-semibold text-clay-800 dark:text-clay-200">Rooted</span>
+            <span className="font-display text-2xl font-semibold" style={{ color: "var(--accent)" }}>Rooted</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
             <Link
               href="/dashboard"
-              className={`text-sm font-medium transition ${
-                isActive("/dashboard")
-                  ? "text-clay-700 dark:text-clay-300"
-                  : "text-charcoal-500 dark:text-charcoal-400 hover:text-charcoal-800 dark:hover:text-bone-200"
-              }`}
+              className="text-sm font-medium transition"
+              style={{ color: isActive("/dashboard") ? "var(--text-primary)" : "var(--text-secondary)" }}
             >
               Dashboard
             </Link>
             <Link
               href="/clients"
-              className={`text-sm font-medium transition ${
-                isActive("/clients")
-                  ? "text-clay-700 dark:text-clay-300"
-                  : "text-charcoal-500 dark:text-charcoal-400 hover:text-charcoal-800 dark:hover:text-bone-200"
-              }`}
+              className="text-sm font-medium transition"
+              style={{ color: isActive("/clients") ? "var(--text-primary)" : "var(--text-secondary)" }}
             >
               Clients
             </Link>
@@ -53,7 +47,8 @@ export function Nav({ userName }: { userName?: string | null }) {
           <div className="flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-lg text-charcoal-500 dark:text-charcoal-400 hover:bg-sage-100 dark:hover:bg-charcoal-800 transition"
+              className="p-2 rounded-lg transition"
+              style={{ color: "var(--text-secondary)" }}
               aria-label="Toggle theme"
             >
               {theme === "light" ? (
@@ -64,10 +59,11 @@ export function Nav({ userName }: { userName?: string | null }) {
             </button>
 
             <div className="hidden md:flex items-center gap-2">
-              <span className="text-sm text-charcoal-500 dark:text-charcoal-400">{userName || "User"}</span>
+              <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{userName || "User"}</span>
               <button
                 onClick={handleLogout}
-                className="text-sm px-3 py-1.5 rounded-lg text-charcoal-600 dark:text-charcoal-300 hover:bg-sage-100 dark:hover:bg-charcoal-800 transition"
+                className="text-sm px-3 py-1.5 rounded-lg transition"
+                style={{ color: "var(--text-secondary)" }}
               >
                 Sign Out
               </button>
@@ -75,7 +71,8 @@ export function Nav({ userName }: { userName?: string | null }) {
 
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="md:hidden p-2 rounded-lg text-charcoal-500 dark:text-charcoal-400 hover:bg-sage-100 dark:hover:bg-charcoal-800 transition"
+              className="md:hidden p-2 rounded-lg transition"
+              style={{ color: "var(--text-secondary)" }}
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
@@ -83,11 +80,11 @@ export function Nav({ userName }: { userName?: string | null }) {
         </div>
 
         {menuOpen && (
-          <div className="md:hidden pb-4 border-t border-sage-200 dark:border-charcoal-700 pt-3 space-y-2">
-            <Link href="/dashboard" className="block text-sm font-medium text-charcoal-700 dark:text-charcoal-300 py-2" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-            <Link href="/clients" className="block text-sm font-medium text-charcoal-700 dark:text-charcoal-300 py-2" onClick={() => setMenuOpen(false)}>Clients</Link>
-            <div className="pt-2 border-t border-sage-200 dark:border-charcoal-700">
-              <button onClick={handleLogout} className="text-sm text-charcoal-500 dark:text-charcoal-400 py-2 w-full text-left">Sign Out</button>
+          <div className="md:hidden pb-4 border-t pt-3 space-y-2" style={{ borderColor: "var(--border)" }}>
+            <Link href="/dashboard" className="block text-sm font-medium py-2" style={{ color: "var(--text-primary)" }} onClick={() => setMenuOpen(false)}>Dashboard</Link>
+            <Link href="/clients" className="block text-sm font-medium py-2" style={{ color: "var(--text-primary)" }} onClick={() => setMenuOpen(false)}>Clients</Link>
+            <div className="pt-2 border-t" style={{ borderColor: "var(--border)" }}>
+              <button onClick={handleLogout} className="text-sm py-2 w-full text-left" style={{ color: "var(--text-secondary)" }}>Sign Out</button>
             </div>
           </div>
         )}

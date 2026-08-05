@@ -38,10 +38,16 @@ export default function Dashboard() {
   }, [router]);
 
   const statusColors: Record<string, string> = {
-    idea: "bg-bone-200 text-clay-700 dark:bg-charcoal-800 dark:text-bone-300",
-    booked: "bg-sage-100 text-sage-700 dark:bg-sage-900/30 dark:text-sage-300",
-    in_progress: "bg-clay-100 text-clay-700 dark:bg-clay-900/30 dark:text-clay-300",
-    delivered: "bg-charcoal-100 text-charcoal-600 dark:bg-charcoal-800 dark:text-charcoal-300",
+    idea: "var(--accent-soft)",
+    booked: "var(--green-soft)",
+    in_progress: "var(--accent-soft)",
+    delivered: "var(--bg-secondary)",
+  };
+  const statusTextColors: Record<string, string> = {
+    idea: "var(--accent)",
+    booked: "var(--green)",
+    in_progress: "var(--accent)",
+    delivered: "var(--text-secondary)",
   };
 
   const statusLabels: Record<string, string> = {
@@ -60,16 +66,17 @@ export default function Dashboard() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-serif text-3xl text-clay-800 dark:text-clay-200">
+          <h1 className="font-display text-3xl" style={{ color: "var(--text-primary)" }}>
             Welcome{userName ? `, ${userName}` : ""}
           </h1>
-          <p className="text-charcoal-500 dark:text-charcoal-400 mt-1 text-sm">
+          <p className="mt-1 text-sm" style={{ color: "var(--text-secondary)" }}>
             {projects.length} project{projects.length !== 1 ? "s" : ""}
           </p>
         </div>
         <Link
           href="/projects/new"
-          className="px-4 py-2 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition"
+          className="px-4 py-2 rounded-lg text-white text-sm font-medium transition"
+          style={{ background: "var(--green)" }}
         >
           New Project
         </Link>
@@ -77,7 +84,7 @@ export default function Dashboard() {
 
       {upcomingShoots.length > 0 && (
         <div className="mb-10">
-          <h2 className="text-sm font-semibold text-charcoal-600 dark:text-charcoal-400 uppercase tracking-wider mb-3">
+          <h2 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-secondary)" }}>
             Upcoming Shoots
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -85,18 +92,19 @@ export default function Dashboard() {
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
-                className="block p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-sage-300 dark:hover:border-charcoal-600 transition"
+                className="block p-4 rounded-xl transition"
+                style={{ border: "1px solid var(--border)", background: "var(--card-bg)" }}
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium text-charcoal-900 dark:text-bone-100">{project.title}</p>
-                    <p className="text-sm text-charcoal-500 dark:text-charcoal-400 mt-0.5">{project.client.name}</p>
+                    <p className="font-medium" style={{ color: "var(--text-primary)" }}>{project.title}</p>
+                    <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>{project.client.name}</p>
                   </div>
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[project.status] || ""}`}>
+                  <span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: statusColors[project.status] || "var(--bg-secondary)", color: statusTextColors[project.status] || "var(--text-secondary)" }}>
                     {statusLabels[project.status] || project.status}
                   </span>
                 </div>
-                <p className="text-sm text-sage-600 dark:text-sage-400 mt-2">
+                <p className="text-sm mt-2" style={{ color: "var(--green)" }}>
                   {project.shootDate ? new Date(project.shootDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "Date TBD"}
                 </p>
               </Link>
@@ -106,21 +114,22 @@ export default function Dashboard() {
       )}
 
       <div>
-        <h2 className="text-sm font-semibold text-charcoal-600 dark:text-charcoal-400 uppercase tracking-wider mb-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-secondary)" }}>
           All Projects
         </h2>
         {loading ? (
-          <div className="text-center py-12 text-charcoal-400">Loading...</div>
+          <div className="text-center py-12" style={{ color: "var(--text-secondary)" }}>Loading...</div>
         ) : projects.length === 0 ? (
           <div className="text-center py-16">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-bone-200 dark:bg-charcoal-800 flex items-center justify-center">
-              <svg className="w-8 h-8 text-clay-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ background: "var(--bg-secondary)" }}>
+              <svg className="w-8 h-8" style={{ color: "var(--accent)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
             </div>
-            <h3 className="font-serif text-xl text-clay-700 dark:text-clay-300 mb-2">No projects yet</h3>
-            <p className="text-charcoal-500 dark:text-charcoal-400 text-sm mb-6">Create your first project to get started</p>
+            <h3 className="font-display text-xl mb-2" style={{ color: "var(--text-primary)" }}>No projects yet</h3>
+            <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>Create your first project to get started</p>
             <Link
               href="/projects/new"
-              className="inline-block px-5 py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white text-sm font-medium transition"
+              className="inline-block px-5 py-2.5 rounded-lg text-white text-sm font-medium transition"
+              style={{ background: "var(--green)" }}
             >
               Create Project
             </Link>
@@ -131,19 +140,20 @@ export default function Dashboard() {
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
-                className="block p-4 rounded-xl border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-sage-300 dark:hover:border-charcoal-600 transition group"
+                className="block p-4 rounded-xl transition group"
+                style={{ border: "1px solid var(--border)", background: "var(--card-bg)" }}
               >
                 <div className="flex items-start justify-between mb-3">
-                  <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[project.status] || ""}`}>
+                  <span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: statusColors[project.status] || "var(--bg-secondary)", color: statusTextColors[project.status] || "var(--text-secondary)" }}>
                     {statusLabels[project.status] || project.status}
                   </span>
-                  <span className="text-xs text-charcoal-400 capitalize">{project.type}</span>
+                  <span className="text-xs capitalize" style={{ color: "var(--text-secondary)" }}>{project.type}</span>
                 </div>
-                <h3 className="font-medium text-charcoal-900 dark:text-bone-100 group-hover:text-clay-700 dark:group-hover:text-clay-300 transition">
+                <h3 className="font-medium transition" style={{ color: "var(--text-primary)" }}>
                   {project.title}
                 </h3>
-                <p className="text-sm text-charcoal-500 dark:text-charcoal-400 mt-0.5">{project.client.name}</p>
-                <div className="flex gap-3 mt-3 text-xs text-charcoal-400 dark:text-charcoal-500">
+                <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>{project.client.name}</p>
+                <div className="flex gap-3 mt-3 text-xs" style={{ color: "var(--text-secondary)" }}>
                   <span>{project._count.boards} board{project._count.boards !== 1 ? "s" : ""}</span>
                   <span>{project._count.shots} shot{project._count.shots !== 1 ? "s" : ""}</span>
                 </div>

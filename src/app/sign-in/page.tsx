@@ -35,48 +35,51 @@ export default function SignIn() {
     <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "var(--bg-primary)" }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
-          <h1 className="font-serif text-4xl font-semibold text-clay-800 dark:text-clay-200">Rooted</h1>
-          <p className="text-charcoal-500 dark:text-charcoal-400 mt-2 text-sm">Creative Planning Studio</p>
+          <h1 className="font-display text-4xl font-semibold" style={{ color: "var(--accent)" }}>Rooted</h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>Creative Planning Studio</p>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 text-sm p-3 rounded-lg border border-red-200 dark:border-red-800">
+            <div className="text-sm p-3 rounded-lg" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent)" }}>
               {error}
             </div>
           )}
           <div>
-            <label className="block text-sm font-medium text-charcoal-700 dark:text-charcoal-300 mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-bone-100 placeholder:text-charcoal-400 focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 rounded-lg focus:outline-none transition"
+              style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)", color: "var(--text-primary)" }}
               placeholder="you@email.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-charcoal-700 dark:text-charcoal-300 mb-1">Password</label>
+            <label className="block text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-charcoal-900 dark:text-bone-100 placeholder:text-charcoal-400 focus:outline-none focus:ring-2 focus:ring-sage-400 focus:border-transparent transition"
+              className="w-full px-4 py-2.5 rounded-lg focus:outline-none transition"
+              style={{ border: "1px solid var(--border)", background: "var(--bg-secondary)", color: "var(--text-primary)" }}
               placeholder="••••••••"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2.5 rounded-lg bg-clay-700 hover:bg-clay-800 text-white font-medium transition disabled:opacity-50"
+            className="w-full py-2.5 rounded-lg text-white font-medium transition disabled:opacity-50"
+            style={{ background: "var(--green)" }}
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
-        <p className="text-center text-sm text-charcoal-500 dark:text-charcoal-400 mt-6">
+        <p className="text-center text-sm mt-6" style={{ color: "var(--text-secondary)" }}>
           Don&apos;t have an account?{" "}
-          <Link href="/sign-up" className="text-sage-600 dark:text-sage-400 hover:underline font-medium">Sign Up</Link>
+          <Link href="/sign-up" className="font-medium hover:underline" style={{ color: "var(--green)" }}>Sign Up</Link>
         </p>
       </div>
     </div>

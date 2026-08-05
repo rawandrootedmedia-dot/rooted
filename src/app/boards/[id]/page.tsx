@@ -481,7 +481,7 @@ function EditableColumn({ card, editing, onStartEdit, onSave, childCount, isDrag
   );
 }
 
-function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSave, isDragOver, onResize }: {
+function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSave, isDragOver, onResize, onAddChild }: {
   card: CardData;
   allCards: CardData[];
   onDelete: (id: string) => void;
@@ -490,6 +490,7 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
   onSave: (id: string, content: any) => void;
   isDragOver?: boolean;
   onResize?: (id: string, e: React.MouseEvent) => void;
+  onAddChild?: (parentId: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: card.id,
@@ -617,6 +618,16 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
               </svg>
             </div>
           )}
+          {onAddChild && allCards.filter((c) => c.parentId === card.id).length > 0 && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onAddChild(card.id); }}
+              className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded text-[10px] font-medium opacity-0 group-hover:opacity-100 transition z-20 flex items-center gap-1"
+              style={{ background: "var(--green)", color: "#fff" }}
+            >
+              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Add
+            </button>
+          )}
         </>
       )}
     </div>
@@ -717,12 +728,38 @@ function ChildCard({ card, allCards, editingId, onStartEdit, onSave, onDelete, o
 }
 
 function ImageSearchPanel({ onAdd, onClose, onUpload }: { onAdd: (image: any) => void; onClose: () => void; onUpload: () => void }) {
+  const [tab, setTab] = useState<"recommended" | "upload" | "search">("recommended");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [recommendedImages, setRecommendedImages] = useState<any[]>([]);
+  const [loadingRec, setLoadingRec] = useState(false);
+
+  const CATEGORIES = [
+    { label: "Nature", query: "nature landscape" },
+    { label: "Portrait", query: "portrait photography" },
+    { label: "Architecture", query: "architecture urban" },
+    { label: "Food", query: "food styling photography" },
+    { label: "Fashion", query: "fashion editorial" },
+    { label: "Travel", query: "travel adventure" },
+    { label: "Minimal", query: "minimal aesthetic" },
+    { label: "Studio", query: "studio photography" },
+  ];
+
+  async function loadCategory(q: string) {
+    setLoadingRec(true);
+    setError("");
+    try {
+      const res = await fetch(`/api/images/search?q=${encodeURIComponent(q)}&page=1&per_page=12`);
+      const data = await res.json();
+      if (data.error) setError(data.error);
+      else setRecommendedImages(data.images || []);
+    } catch { setError("Failed to load images"); }
+    setLoadingRec(false);
+  }
 
   async function search(q: string, p: number = 1) {
     if (!q.trim()) return;
@@ -731,28 +768,16 @@ function ImageSearchPanel({ onAdd, onClose, onUpload }: { onAdd: (image: any) =>
     try {
       const res = await fetch(`/api/images/search?q=${encodeURIComponent(q)}&page=${p}&per_page=20`);
       const data = await res.json();
-      if (data.error) {
-        setError(data.error);
-        setResults([]);
-      } else if (data.images) {
-        setResults((prev) => (p === 1 ? data.images : [...prev, ...data.images]));
-        setPage(p);
-        setTotalPages(data.totalPages || 0);
-      }
-    } catch {
-      setError("Failed to search images");
-    }
+      if (data.error) { setError(data.error); setResults([]); }
+      else { setResults((prev) => (p === 1 ? data.images : [...prev, ...data.images])); setPage(p); setTotalPages(data.totalPages || 0); }
+    } catch { setError("Failed to search images"); }
     setSearching(false);
-  }
-
-  function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter") { setResults([]); search(query, 1); }
   }
 
   return (
     <div
-      className="fixed right-0 top-0 bottom-0 z-50 flex flex-col shadow-2xl"
-      style={{ width: 360, background: "var(--card-bg)", borderLeft: "1px solid var(--border)" }}
+      className="fixed right-0 top-14 bottom-0 z-50 flex flex-col shadow-2xl"
+      style={{ width: 380, background: "var(--card-bg)", borderLeft: "1px solid var(--border)" }}
       onClick={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ borderBottom: "1px solid var(--border)", background: "var(--bg-secondary)" }}>
@@ -762,98 +787,176 @@ function ImageSearchPanel({ onAdd, onClose, onUpload }: { onAdd: (image: any) =>
         </button>
       </div>
 
-      <div className="px-4 py-3 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
-        <button
-          onClick={onUpload}
-          className="w-full px-3 py-2.5 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2"
-          style={{ border: "1px dashed var(--border)", color: "var(--text-primary)", background: "var(--bg-secondary)" }}
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" /></svg>
-          Upload from computer
-        </button>
-      </div>
-
-      <div className="px-4 py-3 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
-        <div className="flex gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Search Unsplash..."
-            className="flex-1 px-3 py-1.5 text-sm rounded-lg focus:outline-none"
-            style={{ border: "1px solid var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)" }}
-          />
+      <div className="flex shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
+        {(["recommended", "upload", "search"] as const).map((t) => (
           <button
-            onClick={() => { setResults([]); search(query, 1); }}
-            disabled={searching || !query.trim()}
-            className="px-3 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50"
-            style={{ background: "var(--green)", color: "#fff" }}
+            key={t}
+            onClick={() => {
+              setTab(t);
+              if (t === "recommended" && recommendedImages.length === 0 && !loadingRec) loadCategory("nature landscape");
+            }}
+            className="flex-1 py-2.5 text-xs font-medium transition capitalize"
+            style={{
+              color: tab === t ? "var(--green)" : "var(--text-secondary)",
+              borderBottom: tab === t ? "2px solid var(--green)" : "2px solid transparent",
+              background: tab === t ? "var(--bg-secondary)" : "transparent",
+            }}
           >
-            {searching ? "..." : "Search"}
+            {t === "recommended" ? "Recommended" : t === "upload" ? "Upload" : "Search"}
           </button>
-        </div>
+        ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {error && (
-          <div className="p-3 rounded-lg text-sm mb-3" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent)" }}>
-            {error}
-            <p className="text-[10px] mt-1 font-mono opacity-70">Set UNSPLASH_ACCESS_KEY in your Dailey OS project to enable search.</p>
-          </div>
-        )}
-
-        {results.length === 0 && !searching && !error && (
-          <div className="h-full flex flex-col items-center justify-center text-center">
-            <svg className="w-10 h-10 mb-3" style={{ color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0022.5 18.75V5.25A2.25 2.25 0 0020.25 3H3.75A2.25 2.25 0 001.5 5.25v13.5A2.25 2.25 0 003.75 21z" /></svg>
-            <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Search for images or upload from your computer</p>
-          </div>
-        )}
-
-        {searching && results.length === 0 && (
-          <div className="h-full flex items-center justify-center">
-            <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "var(--green)", borderTopColor: "transparent" }} />
-          </div>
-        )}
-
-        {results.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            {results.map((img) => (
-              <div
-                key={img.id}
-                className="relative group rounded-lg overflow-hidden cursor-pointer"
-                style={{ aspectRatio: `${img.width}/${img.height}` }}
-                onClick={() => onAdd(img)}
-              >
-                <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" loading="lazy" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-end justify-between p-1.5 opacity-0 group-hover:opacity-100">
-                  <span className="text-[9px] text-white font-mono truncate">{img.author}</span>
-                  <button
-                    className="px-1.5 py-0.5 rounded text-[9px] font-medium text-white transition"
-                    style={{ background: "var(--green)" }}
-                    onClick={(e) => { e.stopPropagation(); onAdd(img); }}
-                  >
-                    + Add
-                  </button>
-                </div>
+      <div className="flex-1 overflow-y-auto">
+        {tab === "recommended" && (
+          <div className="p-4">
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {CATEGORIES.map((cat) => (
+                <button
+                  key={cat.label}
+                  onClick={() => loadCategory(cat.query)}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium transition"
+                  style={{ border: "1px solid var(--border)", color: "var(--text-primary)", background: "var(--bg-secondary)" }}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+            {error && (
+              <div className="p-3 rounded-lg text-sm mb-3" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent)" }}>
+                {error}
+                <p className="text-[10px] mt-1 font-mono opacity-70">Set UNSPLASH_ACCESS_KEY in your Dailey OS project to enable.</p>
               </div>
-            ))}
+            )}
+            {loadingRec && (
+              <div className="flex justify-center py-8">
+                <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "var(--green)", borderTopColor: "transparent" }} />
+              </div>
+            )}
+            {!loadingRec && recommendedImages.length > 0 && (
+              <div className="grid grid-cols-3 gap-1.5">
+                {recommendedImages.map((img) => (
+                  <div
+                    key={img.id}
+                    className="relative group rounded-lg overflow-hidden cursor-pointer"
+                    style={{ aspectRatio: "1/1" }}
+                    onClick={() => onAdd(img)}
+                  >
+                    <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" loading="lazy" />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex items-center justify-center opacity-0 group-hover:opacity-100">
+                      <button
+                        className="px-2 py-1 rounded text-[10px] font-medium text-white transition"
+                        style={{ background: "var(--green)" }}
+                        onClick={(e) => { e.stopPropagation(); onAdd(img); }}
+                      >
+                        + Add
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {!loadingRec && recommendedImages.length === 0 && !error && (
+              <div className="text-center py-8">
+                <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Pick a category above to browse images</p>
+              </div>
+            )}
           </div>
         )}
 
-        {searching && results.length > 0 && (
-          <div className="flex justify-center py-4">
-            <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--green)", borderTopColor: "transparent" }} />
+        {tab === "upload" && (
+          <div className="p-4 flex flex-col items-center justify-center h-full">
+            <div
+              className="w-full flex flex-col items-center justify-center py-12 rounded-xl cursor-pointer transition hover:scale-[1.01]"
+              style={{ border: "2px dashed var(--border)", background: "var(--bg-secondary)" }}
+              onClick={onUpload}
+            >
+              <svg className="w-12 h-12 mb-3" style={{ color: "var(--text-secondary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" /></svg>
+              <p className="text-sm font-medium mb-1" style={{ color: "var(--text-primary)" }}>Upload from computer</p>
+              <p className="text-xs" style={{ color: "var(--text-secondary)" }}>Click or drag & drop an image</p>
+            </div>
           </div>
         )}
 
-        {!searching && results.length > 0 && page < totalPages && (
-          <button
-            onClick={() => search(query, page + 1)}
-            className="w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium transition"
-            style={{ border: "1px solid var(--border)", color: "var(--text-primary)", background: "var(--bg-secondary)" }}
-          >
-            Load more
-          </button>
+        {tab === "search" && (
+          <>
+            <div className="px-4 py-3 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
+              <div className="flex gap-2">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") { setResults([]); search(query, 1); } }}
+                  placeholder="Search Unsplash or paste a Pinterest URL..."
+                  className="flex-1 px-3 py-1.5 text-sm rounded-lg focus:outline-none"
+                  style={{ border: "1px solid var(--border)", background: "var(--bg-primary)", color: "var(--text-primary)" }}
+                />
+                <button
+                  onClick={() => { setResults([]); search(query, 1); }}
+                  disabled={searching || !query.trim()}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium transition disabled:opacity-50"
+                  style={{ background: "var(--green)", color: "#fff" }}
+                >
+                  {searching ? "..." : "Search"}
+                </button>
+              </div>
+            </div>
+            <div className="p-4">
+              {error && (
+                <div className="p-3 rounded-lg text-sm mb-3" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent)" }}>
+                  {error}
+                  <p className="text-[10px] mt-1 font-mono opacity-70">Set UNSPLASH_ACCESS_KEY in your Dailey OS project to enable search.</p>
+                </div>
+              )}
+              {searching && results.length === 0 && (
+                <div className="flex justify-center py-8">
+                  <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: "var(--green)", borderTopColor: "transparent" }} />
+                </div>
+              )}
+              {!searching && results.length === 0 && !error && (
+                <div className="text-center py-8">
+                  <p className="text-sm" style={{ color: "var(--text-secondary)" }}>Search for images or paste a Pinterest URL</p>
+                </div>
+              )}
+              {results.length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {results.map((img) => (
+                    <div
+                      key={img.id}
+                      className="relative group rounded-lg overflow-hidden cursor-pointer"
+                      style={{ aspectRatio: `${img.width}/${img.height}` }}
+                      onClick={() => onAdd(img)}
+                    >
+                      <img src={img.thumb} alt={img.alt} className="w-full h-full object-cover" loading="lazy" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition flex items-end justify-between p-1.5 opacity-0 group-hover:opacity-100">
+                        <span className="text-[9px] text-white font-mono truncate">{img.author}</span>
+                        <button
+                          className="px-1.5 py-0.5 rounded text-[9px] font-medium text-white transition"
+                          style={{ background: "var(--green)" }}
+                          onClick={(e) => { e.stopPropagation(); onAdd(img); }}
+                        >
+                          + Add
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {searching && results.length > 0 && (
+                <div className="flex justify-center py-4">
+                  <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: "var(--green)", borderTopColor: "transparent" }} />
+                </div>
+              )}
+              {!searching && results.length > 0 && page < totalPages && (
+                <button
+                  onClick={() => search(query, page + 1)}
+                  className="w-full mt-3 px-3 py-2 rounded-lg text-sm font-medium transition"
+                  style={{ border: "1px solid var(--border)", color: "var(--text-primary)", background: "var(--bg-secondary)" }}
+                >
+                  Load more
+                </button>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -1372,11 +1475,7 @@ export default function BoardPage() {
 
   function handleToolbarClick(type: string) {
     if (type === "image") {
-      const input = document.createElement("input");
-      input.type = "file";
-      input.accept = "image/*";
-      input.onchange = (e) => handleFileUpload(e as any, "image");
-      input.click();
+      setShowImageSearch(true);
       return;
     }
     if (type === "video") {
@@ -1792,6 +1891,7 @@ export default function BoardPage() {
                           onSave={handleSaveCard}
                           isDragOver={dragOverColumnId === card.id}
                           onResize={startResize}
+                          onAddChild={addCardToColumn}
                         />
                       ))}
 

@@ -81,6 +81,11 @@ type EditableCardProps = {
 function EditableNote({ card, editing, onStartEdit, onSave }: EditableCardProps) {
   const [val, setVal] = useState(card.content?.text || "");
   useEffect(() => { setVal(card.content?.text || ""); }, [card.content?.text]);
+  if (card.locked) return (
+    <div onClick={onStartEdit} className="w-full h-full flex items-center justify-center cursor-text">
+      <p className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{card.content?.text || ""}</p>
+    </div>
+  );
   if (editing) return (
     <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)" }}>
       <div className="mcard-head">

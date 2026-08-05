@@ -386,7 +386,7 @@ export const TEMPLATES: BoardTemplate[] = [
       },
       {
         type: "calendar",
-        content: { month: new Date().getMonth(), year: new Date().getFullYear() },
+        content: { month: new Date().getMonth(), year: new Date().getFullYear(), days: {} },
         x: 40, y: 440, width: 840, height: 680,
         locked: true,
       },

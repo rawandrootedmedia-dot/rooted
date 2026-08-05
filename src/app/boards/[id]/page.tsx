@@ -121,6 +121,8 @@ const WEEKDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 function EditableCalendar({ card, onSave }: { card: CardData; onSave: (content: any) => void }) {
   const month = card.content?.month ?? new Date().getMonth();
   const year = card.content?.year ?? new Date().getFullYear();
+  const days: Record<string, { text: string; todos: { text: string; done: boolean }[] }> = card.content?.days || {};
+  const [openDay, setOpenDay] = useState<number | null>(null);
 
   function getDaysInMonth(m: number, y: number) { return new Date(y, m + 1, 0).getDate(); }
   function getFirstDayOfWeek(m: number, y: number) { return new Date(y, m, 1).getDay(); }
@@ -137,17 +139,27 @@ function EditableCalendar({ card, onSave }: { card: CardData; onSave: (content: 
     let y = year;
     if (m > 11) { m = 0; y++; }
     if (m < 0) { m = 11; y--; }
-    onSave({ month: m, year: y });
+    onSave({ month: m, year: y, days });
   }
 
+  function updateDay(dayNum: number, patch: Partial<{ text: string; todos: { text: string; done: boolean }[] }>) {
+    const key = String(dayNum);
+    const prev = days[key] || { text: "", todos: [] };
+    const updated = { ...prev, ...patch };
+    const newDays = { ...days, [key]: updated };
+    onSave({ month, year, days: newDays });
+  }
+
+  const dayData = openDay !== null ? (days[String(openDay)] || { text: "", todos: [] }) : null;
+
   return (
-    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
+    <div className="w-full h-full flex flex-col rounded-lg overflow-hidden relative" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "var(--card-shadow)" }}>
       <div className="flex items-center justify-between px-3 py-2 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
         <button onClick={() => setMonth(month - 1)} className="p-1 rounded hover:bg-black/5 transition text-lg font-bold" style={{ color: "var(--text-secondary)" }}>&lsaquo;</button>
         <div className="flex items-center gap-2">
           <select
             value={month}
-            onChange={(e) => onSave({ month: Number(e.target.value), year })}
+            onChange={(e) => onSave({ month: Number(e.target.value), year, days })}
             className="text-sm font-medium bg-transparent border-none outline-none cursor-pointer"
             style={{ color: "var(--text-primary)" }}
           >
@@ -155,7 +167,7 @@ function EditableCalendar({ card, onSave }: { card: CardData; onSave: (content: 
           </select>
           <select
             value={year}
-            onChange={(e) => onSave({ month, year: Number(e.target.value) })}
+            onChange={(e) => onSave({ month, year: Number(e.target.value), days })}
             className="text-sm bg-transparent border-none outline-none cursor-pointer"
             style={{ color: "var(--text-secondary)" }}
           >
@@ -173,20 +185,117 @@ function EditableCalendar({ card, onSave }: { card: CardData; onSave: (content: 
         {cells.map((day, i) => {
           const isLastRow = i >= totalCells - 7;
           const isLastCol = (i + 1) % 7 === 0;
+          const dayStr = day ? String(day) : null;
+          const d = dayStr ? days[dayStr] : null;
+          const hasContent = d && ((d.text && d.text.trim()) || d.todos.length > 0);
           return (
             <div
               key={i}
-              className="flex items-start justify-start p-1.5"
+              className="flex flex-col items-start p-1 cursor-pointer hover:bg-black/[0.03] transition"
               style={{
                 borderBottom: isLastRow ? "none" : "1px solid var(--border)",
                 borderRight: isLastCol ? "none" : "1px solid var(--border)",
               }}
+              onClick={() => day && setOpenDay(day)}
             >
-              {day && <span className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{day}</span>}
+              {day && (
+                <>
+                  <span className="text-xs font-medium" style={{ color: "var(--text-primary)" }}>{day}</span>
+                  {hasContent && (
+                    <div className="w-full mt-0.5 overflow-hidden">
+                      {d.text && d.text.trim() && (
+                        <p className="text-[9px] leading-tight truncate" style={{ color: "var(--text-secondary)" }}>{d.text}</p>
+                      )}
+                      {d.todos.slice(0, 2).map((t, ti) => (
+                        <div key={ti} className="flex items-center gap-0.5 mt-0.5">
+                          <div className="w-1.5 h-1.5 rounded-sm border shrink-0" style={{ borderColor: t.done ? "var(--green)" : "var(--border)", background: t.done ? "var(--green)" : "transparent" }} />
+                          <span className="text-[8px] leading-tight truncate" style={{ color: t.done ? "var(--text-secondary)" : "var(--text-primary)", textDecoration: t.done ? "line-through" : "none" }}>{t.text}</span>
+                        </div>
+                      ))}
+                      {d.todos.length > 2 && <span className="text-[8px]" style={{ color: "var(--text-secondary)" }}>+{d.todos.length - 2}</span>}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           );
         })}
       </div>
+
+      {openDay !== null && dayData && (
+        <div className="absolute inset-0 z-50 flex flex-col" style={{ background: "var(--card-bg)" }}>
+          <div className="flex items-center justify-between px-3 py-2 shrink-0" style={{ borderBottom: "1px solid var(--border)" }}>
+            <span className="text-sm font-medium" style={{ color: "var(--text-primary)" }}>{MONTHS[month]} {openDay}, {year}</span>
+            <button onClick={() => setOpenDay(null)} className="p-1 rounded hover:bg-black/5 transition" style={{ color: "var(--text-secondary)" }}>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-auto p-3 space-y-3">
+            <div>
+              <label className="text-[10px] font-mono uppercase tracking-wider mb-1 block" style={{ color: "var(--text-secondary)" }}>Notes</label>
+              <textarea
+                value={dayData.text}
+                onChange={(e) => updateDay(openDay, { text: e.target.value })}
+                placeholder="Add notes for this day..."
+                className="w-full text-sm p-2 rounded resize-none focus:outline-none"
+                style={{ color: "var(--text-primary)", background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-mono uppercase tracking-wider mb-1 block" style={{ color: "var(--text-secondary)" }}>To-Do</label>
+              <div className="space-y-1">
+                {dayData.todos.map((t, i) => (
+                  <div key={i} className="flex items-center gap-2 group/todo">
+                    <button
+                      onClick={() => {
+                        const newTodos = [...dayData.todos];
+                        newTodos[i] = { ...newTodos[i], done: !newTodos[i].done };
+                        updateDay(openDay, { todos: newTodos });
+                      }}
+                      className="w-4 h-4 rounded-sm border shrink-0 flex items-center justify-center transition"
+                      style={{ borderColor: t.done ? "var(--green)" : "var(--border)", background: t.done ? "var(--green)" : "transparent" }}
+                    >
+                      {t.done && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                    </button>
+                    <input
+                      value={t.text}
+                      onChange={(e) => {
+                        const newTodos = [...dayData.todos];
+                        newTodos[i] = { ...newTodos[i], text: e.target.value };
+                        updateDay(openDay, { todos: newTodos });
+                      }}
+                      className="flex-1 text-sm bg-transparent border-none outline-none"
+                      style={{ color: t.done ? "var(--text-secondary)" : "var(--text-primary)", textDecoration: t.done ? "line-through" : "none" }}
+                      placeholder="Todo item..."
+                    />
+                    <button
+                      onClick={() => {
+                        const newTodos = dayData.todos.filter((_, j) => j !== i);
+                        updateDay(openDay, { todos: newTodos });
+                      }}
+                      className="opacity-0 group-hover/todo:opacity-100 transition p-0.5"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => updateDay(openDay, { todos: [...dayData.todos, { text: "", done: false }] })}
+                className="mt-1.5 text-xs flex items-center gap-1 transition hover:opacity-70"
+                style={{ color: "var(--green)" }}
+              >
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                Add todo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

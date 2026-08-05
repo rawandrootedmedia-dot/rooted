@@ -583,7 +583,11 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
   return (
     <div
       ref={setNodeRef}
-      style={style}
+      style={{
+        ...style,
+        border: isDragOver ? "2px solid var(--green)" : undefined,
+        boxShadow: isDragOver ? "0 0 0 4px rgba(60,74,46,0.12)" : undefined,
+      }}
       className={`group ${isEditing ? "z-50" : ""} ${transform ? "z-50" : ""}`}
       {...(isEditing ? {} : attributes)}
       onClick={(e) => e.stopPropagation()}
@@ -1176,7 +1180,7 @@ export default function BoardPage() {
 
     let found: string | null = null;
     for (const c of cards) {
-      if (c.type !== "column" || c.id === cardId) continue;
+      if (c.id === cardId || c.locked) continue;
       const cParent = c.parentId ? cards.find((p) => p.id === c.parentId) : null;
       const absX = cParent ? cParent.x + c.x : c.x;
       const absY = cParent ? cParent.y + c.y : c.y;
@@ -1220,7 +1224,7 @@ export default function BoardPage() {
       const centerX = newAbsX + card.width / 2;
       const centerY = newAbsY + card.height / 2;
       for (const c of cards) {
-        if (c.type !== "column" || c.id === cardId || c.parentId === cardId) continue;
+        if (c.id === cardId || c.parentId === cardId || c.locked) continue;
         if (!isDescendant(cardId, c.id)) continue;
         if (centerX >= c.x && centerX <= c.x + c.width && centerY >= c.y && centerY <= c.y + c.height) {
           targetColumnId = c.id;
@@ -1258,7 +1262,8 @@ export default function BoardPage() {
       const centerX2 = newAbsX + card.width / 2;
       const centerY2 = newAbsY + card.height / 2;
       for (const c of cards) {
-        if (c.type !== "column" || c.id === cardId) continue;
+        if (c.id === cardId || c.locked) continue;
+        if (card.parentId !== c.id && isDescendant(c.id, card.id)) continue;
         if (centerX2 >= c.x && centerX2 <= c.x + c.width && centerY2 >= c.y && centerY2 <= c.y + c.height) {
           targetColumnId = c.id;
           break;

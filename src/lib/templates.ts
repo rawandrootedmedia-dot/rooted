@@ -385,23 +385,208 @@ export const TEMPLATES: BoardTemplate[] = [
       },
       {
         type: "note",
-        content: { text: "                               March 2026\n  ┌─────────────────────────────────────────────────────────┐\n  │ Sun │ Mon │ Tue │ Wed │ Thu │ Fri │ Sat │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │     │     │     │     │     │     │  1  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │  2  │  3  │  4  │  5  │  6  │  7  │  8  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │  9  │ 10  │ 11  │ 12  │ 13  │ 14  │ 15  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │ 16  │ 17  │ 18  │ 19  │ 20  │ 21  │ 22  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │ 23  │ 24  │ 25  │ 26  │ 27  │ 28  │ 29  │\n  │     │     │     │     │     │     │     │\n  ├─────┼─────┼─────┼─────┼─────┼─────┼─────┤\n  │ 30  │ 31  │     │     │     │     │     │\n  │     │     │     │     │     │     │     │\n  └─────┴─────┴─────┴─────┴─────┴─────┴─────┘" },
-        x: 40, y: 440, width: 700, height: 480,
+        content: { text: "Sun" },
+        x: 40, y: 440, width: 120, height: 36,
+      },
+      {
+        type: "note",
+        content: { text: "Mon" },
+        x: 165, y: 440, width: 120, height: 36,
+      },
+      {
+        type: "note",
+        content: { text: "Tue" },
+        x: 290, y: 440, width: 120, height: 36,
+      },
+      {
+        type: "note",
+        content: { text: "Wed" },
+        x: 415, y: 440, width: 120, height: 36,
+      },
+      {
+        type: "note",
+        content: { text: "Thu" },
+        x: 540, y: 440, width: 120, height: 36,
+      },
+      {
+        type: "note",
+        content: { text: "Fri" },
+        x: 665, y: 440, width: 120, height: 36,
+      },
+      {
+        type: "note",
+        content: { text: "Sat" },
+        x: 790, y: 440, width: 120, height: 36,
+      },
+      {
+        type: "note",
+        content: { text: "1" },
+        x: 790, y: 480, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "2" },
+        x: 40, y: 595, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "3" },
+        x: 165, y: 595, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "4" },
+        x: 290, y: 595, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "5" },
+        x: 415, y: 595, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "6" },
+        x: 540, y: 595, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "7" },
+        x: 665, y: 595, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "8" },
+        x: 790, y: 595, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "9" },
+        x: 40, y: 710, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "10" },
+        x: 165, y: 710, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "11" },
+        x: 290, y: 710, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "12" },
+        x: 415, y: 710, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "13" },
+        x: 540, y: 710, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "14" },
+        x: 665, y: 710, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "15" },
+        x: 790, y: 710, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "16" },
+        x: 40, y: 825, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "17" },
+        x: 165, y: 825, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "18" },
+        x: 290, y: 825, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "19" },
+        x: 415, y: 825, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "20" },
+        x: 540, y: 825, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "21" },
+        x: 665, y: 825, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "22" },
+        x: 790, y: 825, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "23" },
+        x: 40, y: 940, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "24" },
+        x: 165, y: 940, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "25" },
+        x: 290, y: 940, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "26" },
+        x: 415, y: 940, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "27" },
+        x: 540, y: 940, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "28" },
+        x: 665, y: 940, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "29" },
+        x: 790, y: 940, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "30" },
+        x: 40, y: 1055, width: 120, height: 110,
+      },
+      {
+        type: "note",
+        content: { text: "31" },
+        x: 165, y: 1055, width: 120, height: 110,
       },
       {
         type: "note",
         content: { text: "## Key Dates\n• Post shoot:\n• Edit review:\n• Client approval:\n• First post:\n• Campaign end:" },
-        x: 770, y: 440, width: 220, height: 210,
+        x: 940, y: 440, width: 220, height: 210,
       },
       {
         type: "todo",
         content: { items: ["Write captions for Week 1", "Schedule photo shoots", "Prepare story templates", "Confirm client approvals", "Review analytics"] },
-        x: 770, y: 680, width: 220, height: 240,
+        x: 940, y: 680, width: 220, height: 240,
       },
       {
         type: "note",
         content: { text: "## Hashtags\nPrimary:\nSecondary:\nBranded:\nKeywords:" },
-        x: 40, y: 950, width: 260, height: 170,
+        x: 940, y: 940, width: 220, height: 170,
       },
     ],
   },

@@ -996,6 +996,7 @@ export default function BoardPage() {
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [showShare, setShowShare] = useState(false);
   const [shares, setShares] = useState<any[]>([]);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [shareName, setShareName] = useState("");
   const [shareEmail, setShareEmail] = useState("");
   const [creatingShare, setCreatingShare] = useState(false);
@@ -1852,30 +1853,50 @@ export default function BoardPage() {
               </div>
             </DndContext>
 
-            <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-1.5 p-2 rounded-xl" style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "0 4px 24px rgba(0,0,0,0.08)" }}>
-              {TOOLBAR_ITEMS.map((item) => {
-                if (item.type === "divider") {
-                  return <div key="divider" className="toolbar-divider" />;
-                }
-                return (
-                  <div key={item.type} className="relative group/tool">
-                    <button
-                      draggable
-                      onDragStart={(e) => { setDragType(item.type); e.dataTransfer.setData("text/plain", item.type); }}
-                      onDragEnd={() => setDragType(null)}
-                      onClick={(e) => { e.stopPropagation(); handleToolbarClick(item.type); }}
-                      className="toolbar-btn"
-                      title={item.label}
-                    >
-                      <svg className="w-6 h-6" style={{ color: "var(--text-primary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} /></svg>
-                    </button>
-                    <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/tool:opacity-100 transition pointer-events-none font-mono" style={{ background: "var(--green)", color: "#fff" }}>
-                      {item.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+            {sidebarOpen ? (
+              <div className="fixed left-0 top-14 bottom-0 z-40 flex flex-col w-14" style={{ background: "var(--card-bg)", borderRight: "1px solid var(--border)", boxShadow: "2px 0 12px rgba(0,0,0,0.05)" }}>
+                <div className="flex-1 flex flex-col items-center gap-1 py-3 overflow-y-auto">
+                  {TOOLBAR_ITEMS.map((item) => {
+                    if (item.type === "divider") {
+                      return <div key="divider" className="w-8 toolbar-divider" />;
+                    }
+                    return (
+                      <div key={item.type} className="relative group/tool">
+                        <button
+                          draggable
+                          onDragStart={(e) => { setDragType(item.type); e.dataTransfer.setData("text/plain", item.type); }}
+                          onDragEnd={() => setDragType(null)}
+                          onClick={(e) => { e.stopPropagation(); handleToolbarClick(item.type); }}
+                          className="toolbar-btn"
+                          title={item.label}
+                        >
+                          <svg className="w-6 h-6" style={{ color: "var(--text-primary)" }} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} /></svg>
+                        </button>
+                        <span className="absolute left-full ml-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap opacity-0 group-hover/tool:opacity-100 transition pointer-events-none font-mono" style={{ background: "var(--green)", color: "#fff" }}>
+                          {item.label}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => setSidebarOpen(false)}
+                  className="flex items-center justify-center py-2 transition hover:bg-black/5"
+                  style={{ borderTop: "1px solid var(--border)", color: "var(--text-secondary)" }}
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="fixed left-3 top-20 z-40 p-2 rounded-lg transition hover:bg-black/5"
+                style={{ background: "var(--card-bg)", border: "1px solid var(--border)", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", color: "var(--text-primary)" }}
+                title="Show toolbar"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+              </button>
+            )}
           </>
         )}
       </div>

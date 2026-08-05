@@ -5,6 +5,7 @@ export type TemplateCard = {
   y: number;
   width: number;
   height: number;
+  locked?: boolean;
 };
 
 export type BoardTemplate = {
@@ -422,156 +423,187 @@ export const TEMPLATES: BoardTemplate[] = [
         type: "note",
         content: { text: "1" },
         x: 790, y: 480, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "2" },
         x: 40, y: 595, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "3" },
         x: 165, y: 595, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "4" },
         x: 290, y: 595, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "5" },
         x: 415, y: 595, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "6" },
         x: 540, y: 595, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "7" },
         x: 665, y: 595, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "8" },
         x: 790, y: 595, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "9" },
         x: 40, y: 710, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "10" },
         x: 165, y: 710, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "11" },
         x: 290, y: 710, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "12" },
         x: 415, y: 710, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "13" },
         x: 540, y: 710, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "14" },
         x: 665, y: 710, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "15" },
         x: 790, y: 710, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "16" },
         x: 40, y: 825, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "17" },
         x: 165, y: 825, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "18" },
         x: 290, y: 825, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "19" },
         x: 415, y: 825, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "20" },
         x: 540, y: 825, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "21" },
         x: 665, y: 825, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "22" },
         x: 790, y: 825, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "23" },
         x: 40, y: 940, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "24" },
         x: 165, y: 940, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "25" },
         x: 290, y: 940, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "26" },
         x: 415, y: 940, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "27" },
         x: 540, y: 940, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "28" },
         x: 665, y: 940, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "29" },
         x: 790, y: 940, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "30" },
         x: 40, y: 1055, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",
         content: { text: "31" },
         x: 165, y: 1055, width: 120, height: 110,
+        locked: true,
       },
       {
         type: "note",

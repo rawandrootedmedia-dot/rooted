@@ -14,6 +14,7 @@ type CardData = {
   width: number;
   height: number;
   zIndex: number;
+  locked: boolean;
   parentId: string | null;
 };
 
@@ -300,7 +301,10 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
   isDragOver?: boolean;
   onResize?: (id: string, e: React.MouseEvent) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform } = useDraggable({ id: card.id });
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: card.id,
+    disabled: !!card.locked,
+  });
 
   const parent = card.parentId ? allCards.find((c) => c.id === card.parentId) : null;
   const renderX = parent ? parent.x + card.x : card.x;
@@ -395,9 +399,18 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
       {cardVisual()}
       {!isEditing && (
         <>
-          <div {...listeners} className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing z-20">
-            <div className="px-3 py-0.5 rounded-full text-[10px] font-medium shadow-lg" style={{ background: "var(--green)", color: "#fff" }}>drag</div>
-          </div>
+          {card.locked ? (
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
+              <div className="px-2 py-0.5 rounded-full text-[10px] font-medium shadow-lg flex items-center gap-1" style={{ background: "var(--green)", color: "#fff" }}>
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                locked
+              </div>
+            </div>
+          ) : (
+            <div {...listeners} className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing z-20">
+              <div className="px-3 py-0.5 rounded-full text-[10px] font-medium shadow-lg" style={{ background: "var(--green)", color: "#fff" }}>drag</div>
+            </div>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(card.id); }}
             className="absolute -top-2 -right-2 w-6 h-6 rounded-full text-white text-xs opacity-0 group-hover:opacity-100 transition shadow-lg flex items-center justify-center z-20"
@@ -992,7 +1005,7 @@ export default function BoardPage() {
     const cardId = event.active.id as string;
     const delta = event.delta || { x: 0, y: 0 };
     const card = cards.find((c) => c.id === cardId);
-    if (!card) return;
+    if (!card || card.locked) return;
     setDragOverColumnId(null);
     snapshotBeforeChange();
 
@@ -1102,7 +1115,7 @@ export default function BoardPage() {
     setTimeout(() => commitHistory(), 0);
   }, [cards, updateCard]);
 
-  async function createCard(type: string, content: any, x?: number, y?: number) {
+  async function createCard(type: string, content: any, x?: number, y?: number, locked?: boolean) {
     const canvas = canvasRef.current;
     let cx = 40 + cards.length * 20;
     let cy = 40 + cards.length * 20;
@@ -1120,7 +1133,7 @@ export default function BoardPage() {
     const res = await fetch("/api/cards", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, content, x: cx, y: cy, width: w, height: h, boardId: id }),
+      body: JSON.stringify({ type, content, x: cx, y: cy, width: w, height: h, boardId: id, locked: locked ?? false }),
     });
 
     if (res.ok) {

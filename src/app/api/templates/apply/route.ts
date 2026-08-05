@@ -28,6 +28,7 @@ export async function POST(request: Request) {
     y: number;
     width: number;
     height: number;
+    locked?: boolean;
   }>;
 
   if (isCustom) {
@@ -65,6 +66,7 @@ export async function POST(request: Request) {
           width: tc.width,
           height: tc.height,
           zIndex: zOffset++,
+          locked: tc.locked ?? false,
           boardId,
         },
       })

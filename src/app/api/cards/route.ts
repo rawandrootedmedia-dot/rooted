@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { type, content, x, y, width, height, boardId } = await request.json();
+  const { type, content, x, y, width, height, boardId, locked } = await request.json();
   if (!type || !boardId) return NextResponse.json({ error: "Type and board required" }, { status: 400 });
 
   const board = await prisma.board.findFirst({
@@ -29,6 +29,7 @@ export async function POST(request: Request) {
       width: width ?? 260,
       height: height ?? 200,
       zIndex: (maxZ?.zIndex ?? 0) + 1,
+      locked: locked ?? false,
       boardId,
     },
   });

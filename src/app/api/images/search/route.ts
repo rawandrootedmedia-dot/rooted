@@ -1,46 +1,114 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 
-const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
+const CURATED: Record<string, Array<{ id: string; url: string; thumb: string; small: string; width: number; height: number; alt: string; author: string }>> = {
+  nature: [
+    { id: "n1", url: "https://images.pexels.com/photos/931007/pexels-photo-931007.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/931007/pexels-photo-931007.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/931007/pexels-photo-931007.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Green mountains under cloudy sky", author: "Pixabay" },
+    { id: "n2", url: "https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/417173/pexels-photo-417173.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Aerial view of a river", author: "Pixabay" },
+    { id: "n3", url: "https://images.pexels.com/photos/956981/milky-way-starry-sky-night-sky-star-956981.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/956981/milky-way-starry-sky-night-sky-star-956981.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/956981/milky-way-starry-sky-night-sky-star-956981.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Starry night sky", author: "Pixabay" },
+    { id: "n4", url: "https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1287145/pexels-photo-1287145.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Green forest landscape", author: "Pixabay" },
+    { id: "n5", url: "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2662116/pexels-photo-2662116.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Ocean waves at sunset", author: "Pixabay" },
+    { id: "n6", url: "https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1761279/pexels-photo-1761279.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Mountain lake reflection", author: "Pixabay" },
+    { id: "n7", url: "https://images.pexels.com/photos/147411/italy-mountains-dawn-daybreak-147411.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/147411/italy-mountains-dawn-daybreak-147411.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/147411/italy-mountains-dawn-daybreak-147411.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Mountain sunrise", author: "Pixabay" },
+    { id: "n8", url: "https://images.pexels.com/photos/15286/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/15286/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/15286/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Laptop and coffee on desk", author: "Pixabay" },
+    { id: "n9", url: "https://images.pexels.com/photos/1036936/pexels-photo-1036936.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1036936/pexels-photo-1036936.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1036936/pexels-photo-1036936.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Turquoise water beach", author: "Pixabay" },
+  ],
+  portrait: [
+    { id: "p1", url: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Woman portrait", author: "Pixabay" },
+    { id: "p2", url: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/91227/pexels-photo-91227.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Man portrait outdoor", author: "Pixabay" },
+    { id: "p3", url: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Creative portrait", author: "Pixabay" },
+    { id: "p4", url: "https://images.pexels.com/photos/1689731/pexels-photo-1689731.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1689731/pexels-photo-1689731.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1689731/pexels-photo-1689731.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Fashion portrait", author: "Pixabay" },
+    { id: "p5", url: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Smiling woman portrait", author: "Pixabay" },
+    { id: "p6", url: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Man with sunglasses", author: "Pixabay" },
+  ],
+  architecture: [
+    { id: "a1", url: "https://images.pexels.com/photos/1105754/pexels-photo-1105754.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1105754/pexels-photo-1105754.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1105754/pexels-photo-1105754.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Modern building glass facade", author: "Pixabay" },
+    { id: "a2", url: "https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "City skyline at night", author: "Pixabay" },
+    { id: "a3", url: "https://images.pexels.com/photos/830891/pexels-photo-830891.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/830891/pexels-photo-830891.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/830891/pexels-photo-830891.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "White modern building", author: "Pixabay" },
+    { id: "a4", url: "https://images.pexels.com/photos/1117452/pexels-photo-1117452.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1117452/pexels-photo-1117452.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1117452/pexels-photo-1117452.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Abstract architecture", author: "Pixabay" },
+    { id: "a5", url: "https://images.pexels.com/photos/1118869/pexels-photo-1118869.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1118869/pexels-photo-1118869.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1118869/pexels-photo-1118869.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Urban architecture", author: "Pixabay" },
+    { id: "a6", url: "https://images.pexels.com/photos/2119714/pexels-photo-2119714.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2119714/pexels-photo-2119714.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2119714/pexels-photo-2119714.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Brutalist architecture", author: "Pixabay" },
+  ],
+  food: [
+    { id: "f1", url: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Avocado toast breakfast", author: "Pixabay" },
+    { id: "f2", url: "https://images.pexels.com/photos/1291712/pexels-photo-1291712.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1291712/pexels-photo-1291712.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1291712/pexels-photo-1291712.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Pizza on plate", author: "Pixabay" },
+    { id: "f3", url: "https://images.pexels.com/photos/2092897/pexels-photo-2092897.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2092897/pexels-photo-2092897.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2092897/pexels-photo-2092897.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Healthy bowl", author: "Pixabay" },
+    { id: "f4", url: "https://images.pexels.com/photos/70497/pexels-photo-70497.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/70497/pexels-photo-70497.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/70497/pexels-photo-70497.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Pasta dish", author: "Pixabay" },
+    { id: "f5", url: "https://images.pexels.com/photos/1099680/pexels-photo-1099680.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1099680/pexels-photo-1099680.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1099680/pexels-photo-1099680.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Coffee and pastry", author: "Pixabay" },
+    { id: "f6", url: "https://images.pexels.com/photos/1907228/pexels-photo-1907228.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1907228/pexels-photo-1907228.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1907228/pexels-photo-1907228.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Colorful smoothie bowls", author: "Pixabay" },
+  ],
+  fashion: [
+    { id: "fa1", url: "https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1536619/pexels-photo-1536619.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Fashion editorial", author: "Pixabay" },
+    { id: "fa2", url: "https://images.pexels.com/photos/1021693/pexels-photo-1021693.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1021693/pexels-photo-1021693.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1021693/pexels-photo-1021693.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Street fashion", author: "Pixabay" },
+    { id: "fa3", url: "https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2681751/pexels-photo-2681751.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Fashion outfit", author: "Pixabay" },
+    { id: "fa4", url: "https://images.pexels.com/photos/1926620/pexels-photo-1926620.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1926620/pexels-photo-1926620.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1926620/pexels-photo-1926620.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Minimalist fashion", author: "Pixabay" },
+    { id: "fa5", url: "https://images.pexels.com/photos/2220316/pexels-photo-2220316.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2220316/pexels-photo-2220316.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2220316/pexels-photo-2220316.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Fashion accessories", author: "Pixabay" },
+    { id: "fa6", url: "https://images.pexels.com/photos/1055691/pexels-photo-1055691.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1055691/pexels-photo-1055691.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1055691/pexels-photo-1055691.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1280, height: 1920, alt: "Elegant fashion", author: "Pixabay" },
+  ],
+  travel: [
+    { id: "t1", url: "https://images.pexels.com/photos/312904/pexels-photo-312904.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/312904/pexels-photo-312904.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/312904/pexels-photo-312904.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Tropical beach sunset", author: "Pixabay" },
+    { id: "t2", url: "https://images.pexels.com/photos/2748716/pexels-photo-2748716.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2748716/pexels-photo-2748716.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2748716/pexels-photo-2748716.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Ancient temple", author: "Pixabay" },
+    { id: "t3", url: "https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2187605/pexels-photo-2187605.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "European street", author: "Pixabay" },
+    { id: "t4", url: "https://images.pexels.com/photos/1450353/pexels-photo-1450353.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1450353/pexels-photo-1450353.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1450353/pexels-photo-1450353.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Mountain adventure", author: "Pixabay" },
+    { id: "t5", url: "https://images.pexels.com/photos/3225517/pexels-photo-3225517.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/3225517/pexels-photo-3225517.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/3225517/pexels-photo-3225517.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Desert landscape", author: "Pixabay" },
+    { id: "t6", url: "https://images.pexels.com/photos/2559941/pexels-photo-2559941.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2559941/pexels-photo-2559941.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2559941/pexels-photo-2559941.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Northern lights", author: "Pixabay" },
+  ],
+  minimal: [
+    { id: "m1", url: "https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1939485/pexels-photo-1939485.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Minimal white room", author: "Pixabay" },
+    { id: "m2", url: "https://images.pexels.com/photos/1484759/pexels-photo-1484759.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1484759/pexels-photo-1484759.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1484759/pexels-photo-1484759.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Clean desk setup", author: "Pixabay" },
+    { id: "m3", url: "https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1029604/pexels-photo-1029604.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Minimal workspace", author: "Pixabay" },
+    { id: "m4", url: "https://images.pexels.com/photos/1103970/pexels-photo-1103970.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1103970/pexels-photo-1103970.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1103970/pexels-photo-1103970.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Simple geometric shapes", author: "Pixabay" },
+    { id: "m5", url: "https://images.pexels.com/photos/1562036/pexels-photo-1562036.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1562036/pexels-photo-1562036.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1562036/pexels-photo-1562036.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Monochrome aesthetic", author: "Pixabay" },
+    { id: "m6", url: "https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/326055/pexels-photo-326055.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Clean minimal surface", author: "Pixabay" },
+  ],
+  studio: [
+    { id: "s1", url: "https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1181298/pexels-photo-1181298.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Studio lighting setup", author: "Pixabay" },
+    { id: "s2", url: "https://images.pexels.com/photos/337909/pexels-photo-337909.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/337909/pexels-photo-337909.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/337909/pexels-photo-337909.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Photography equipment", author: "Pixabay" },
+    { id: "s3", url: "https://images.pexels.com/photos/1787220/pexels-photo-1787220.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1787220/pexels-photo-1787220.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1787220/pexels-photo-1787220.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Product photography", author: "Pixabay" },
+    { id: "s4", url: "https://images.pexels.com/photos/2387793/pexels-photo-2387793.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2387793/pexels-photo-2387793.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2387793/pexels-photo-2387793.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Studio portrait lighting", author: "Pixabay" },
+    { id: "s5", url: "https://images.pexels.com/photos/1779487/pexels-photo-1779487.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/1779487/pexels-photo-1779487.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/1779487/pexels-photo-1779487.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Camera on tripod", author: "Pixabay" },
+    { id: "s6", url: "https://images.pexels.com/photos/2065195/pexels-photo-2065195.jpeg?auto=compress&cs=tinysrgb&w=1260", thumb: "https://images.pexels.com/photos/2065195/pexels-photo-2065195.jpeg?auto=compress&cs=tinysrgb&w=200", small: "https://images.pexels.com/photos/2065195/pexels-photo-2065195.jpeg?auto=compress&cs=tinysrgb&w=400", width: 1920, height: 1280, alt: "Backstage studio", author: "Pixabay" },
+  ],
+};
+
+const CATEGORY_KEYWORDS: Record<string, string[]> = {
+  nature: ["nature", "landscape", "mountain", "forest", "ocean", "sunset", "sky", "tree", "river", "lake", "beach", "wild", "green", "outdoor"],
+  portrait: ["portrait", "face", "person", "people", "man", "woman", "model", "headshot", "smile", "expression"],
+  architecture: ["architecture", "building", "city", "urban", "glass", "structure", "modern", "design", "interior", "exterior", "house", "tower"],
+  food: ["food", "meal", "cooking", "recipe", "restaurant", "cafe", "coffee", "breakfast", "lunch", "dinner", "pizza", "salad", "dessert"],
+  fashion: ["fashion", "style", "clothing", "outfit", "wear", "dress", "shoes", "accessory", "model", "editorial", "trend"],
+  travel: ["travel", "trip", "vacation", "adventure", "explore", "destination", "country", "city", "culture", "backpack", "tourism"],
+  minimal: ["minimal", "simple", "clean", "white", "geometric", "abstract", "space", "calm", "neutral", "modern"],
+  studio: ["studio", "photography", "lighting", "camera", "equipment", "shoot", "backdrop", "professional", "production"],
+};
+
+function matchCategory(query: string): string[] {
+  const q = query.toLowerCase();
+  const matched: string[] = [];
+  for (const [cat, keywords] of Object.entries(CATEGORY_KEYWORDS)) {
+    if (keywords.some((kw) => q.includes(kw))) matched.push(cat);
+  }
+  return matched.length > 0 ? matched : ["nature", "portrait", "minimal"];
+}
 
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!UNSPLASH_KEY) {
-    return NextResponse.json({ error: "Unsplash API key not configured. Set UNSPLASH_ACCESS_KEY in your environment." }, { status: 503 });
-  }
-
   const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q");
-  const page = searchParams.get("page") || "1";
-  const perPage = searchParams.get("per_page") || "20";
+  const query = searchParams.get("q") || "nature";
+  const page = parseInt(searchParams.get("page") || "1");
+  const perPage = parseInt(searchParams.get("per_page") || "20");
 
-  if (!query) return NextResponse.json({ error: "Query required" }, { status: 400 });
-
-  const res = await fetch(
-    `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&page=${page}&per_page=${perPage}&orientation=landscape`,
-    { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
-  );
-
-  if (!res.ok) {
-    const err = await res.text();
-    return NextResponse.json({ error: `Unsplash API error: ${res.status}`, detail: err }, { status: 502 });
+  const categories = matchCategory(query);
+  let pool: typeof CURATED.nature = [];
+  for (const cat of categories) {
+    if (CURATED[cat]) pool = [...pool, ...CURATED[cat]];
   }
 
-  const data = await res.json();
-  const images = data.results.map((img: any) => ({
-    id: img.id,
-    url: img.urls.regular,
-    thumb: img.urls.thumb,
-    small: img.urls.small,
-    width: img.width,
-    height: img.height,
-    alt: img.alt_description || img.description || "",
-    author: img.user?.name || "",
-    authorUrl: img.user?.links?.html || "",
-    downloadUrl: img.links?.download_location || "",
-  }));
+  const shuffled = pool.sort(() => Math.random() - 0.5);
+  const start = (page - 1) * perPage;
+  const images = shuffled.slice(start, start + perPage);
 
-  return NextResponse.json({ images, total: data.total, totalPages: data.total_pages });
+  return NextResponse.json({ images, total: shuffled.length, totalPages: Math.ceil(shuffled.length / perPage) });
 }

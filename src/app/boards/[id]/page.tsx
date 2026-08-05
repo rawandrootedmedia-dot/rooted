@@ -825,7 +825,6 @@ function ImageSearchPanel({ onAdd, onClose, onUpload }: { onAdd: (image: any) =>
             {error && (
               <div className="p-3 rounded-lg text-sm mb-3" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent)" }}>
                 {error}
-                <p className="text-[10px] mt-1 font-mono opacity-70">Set UNSPLASH_ACCESS_KEY in your Dailey OS project to enable.</p>
               </div>
             )}
             {loadingRec && (
@@ -904,7 +903,6 @@ function ImageSearchPanel({ onAdd, onClose, onUpload }: { onAdd: (image: any) =>
               {error && (
                 <div className="p-3 rounded-lg text-sm mb-3" style={{ background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid var(--accent)" }}>
                   {error}
-                  <p className="text-[10px] mt-1 font-mono opacity-70">Set UNSPLASH_ACCESS_KEY in your Dailey OS project to enable search.</p>
                 </div>
               )}
               {searching && results.length === 0 && (

@@ -802,6 +802,9 @@ export default function BoardPage() {
   const [imagePage, setImagePage] = useState(1);
   const [imageTotalPages, setImageTotalPages] = useState(0);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const [history, setHistory] = useState<CardData[][]>([[]]);
+  const [historyIdx, setHistoryIdx] = useState(0);
+  const preChangeRef = useRef<CardData[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -814,11 +817,60 @@ export default function BoardPage() {
         if (data.error) router.push("/dashboard");
         else {
           setBoard(data.board);
-          setCards(data.board.cards || []);
+          const initialCards = data.board.cards || [];
+          setCards(initialCards);
+          setHistory([JSON.parse(JSON.stringify(initialCards))]);
+          setHistoryIdx(0);
         }
         setLoading(false);
       });
   }, [id, router]);
+
+  function pushHistory(newCards: CardData[]) {
+    setHistory((prev) => {
+      const trimmed = prev.slice(0, historyIdx + 1);
+      return [...trimmed, JSON.parse(JSON.stringify(newCards))];
+    });
+    setHistoryIdx((prev) => prev + 1);
+  }
+
+  function snapshotBeforeChange() {
+    preChangeRef.current = JSON.parse(JSON.stringify(cards));
+  }
+
+  function commitHistory() {
+    const snap = preChangeRef.current;
+    if (snap.length === 0 && cards.length === 0) return;
+    setHistory((prev) => {
+      const trimmed = prev.slice(0, historyIdx + 1);
+      return [...trimmed, snap];
+    });
+    setHistoryIdx((prev) => prev + 1);
+  }
+
+  function undo() {
+    if (historyIdx <= 0) return;
+    const prev = history[historyIdx - 1];
+    setCards(prev);
+    setHistoryIdx((prev) => prev - 1);
+  }
+
+  function redo() {
+    if (historyIdx >= history.length - 1) return;
+    const next = history[historyIdx + 1];
+    setCards(next);
+    setHistoryIdx((prev) => prev + 1);
+  }
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === "z" && e.shiftKey) { e.preventDefault(); redo(); }
+      if ((e.metaKey || e.ctrlKey) && e.key === "y") { e.preventDefault(); redo(); }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [historyIdx, history]);
 
   const updateCard = useCallback(async (cardId: string, data: Partial<CardData>) => {
     await fetch(`/api/cards/${cardId}`, {
@@ -942,6 +994,7 @@ export default function BoardPage() {
     const card = cards.find((c) => c.id === cardId);
     if (!card) return;
     setDragOverColumnId(null);
+    snapshotBeforeChange();
 
     const updates: { id: string; x: number; y: number; parentId?: string | null; height?: number }[] = [];
 
@@ -1045,6 +1098,8 @@ export default function BoardPage() {
         }
       }
     }
+
+    setTimeout(() => commitHistory(), 0);
   }, [cards, updateCard]);
 
   async function createCard(type: string, content: any, x?: number, y?: number) {
@@ -1070,13 +1125,17 @@ export default function BoardPage() {
 
     if (res.ok) {
       const data = await res.json();
+      snapshotBeforeChange();
       setCards((prev) => [...prev, data.card]);
+      setTimeout(() => commitHistory(), 0);
     }
   }
 
   async function deleteCard(cardId: string) {
     await fetch(`/api/cards/${cardId}`, { method: "DELETE" });
+    snapshotBeforeChange();
     setCards((prev) => prev.filter((c) => c.id !== cardId));
+    setTimeout(() => commitHistory(), 0);
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>, cardType: string) {
@@ -1128,7 +1187,9 @@ export default function BoardPage() {
 
   function handleSaveCard(cardId: string, content: any) {
     setEditingId(null);
+    snapshotBeforeChange();
     setCards((prev) => prev.map((c) => (c.id === cardId ? { ...c, content } : c)));
+    setTimeout(() => commitHistory(), 0);
     updateCard(cardId, { content });
   }
 
@@ -1371,6 +1432,26 @@ export default function BoardPage() {
         <div className="flex items-center gap-3">
           <Link href={`/projects/${board.project?.id}`} className="text-sm hover:underline" style={{ color: "var(--green)" }}>&larr;</Link>
           <span className="font-display text-lg" style={{ color: "var(--text-primary)" }}>{board.title}</span>
+          <div className="flex items-center gap-1 ml-2">
+            <button
+              onClick={undo}
+              disabled={historyIdx <= 0}
+              className="p-1.5 rounded-lg transition disabled:opacity-30"
+              style={{ color: "var(--text-primary)" }}
+              title="Undo (Ctrl+Z)"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" /></svg>
+            </button>
+            <button
+              onClick={redo}
+              disabled={historyIdx >= history.length - 1}
+              className="p-1.5 rounded-lg transition disabled:opacity-30"
+              style={{ color: "var(--text-primary)" }}
+              title="Redo (Ctrl+Shift+Z)"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10H11a8 8 0 00-8 8v2m18-10l-6 6m6-6l-6-6" /></svg>
+            </button>
+          </div>
           {confirmDelete ? (
             <div className="flex items-center gap-2 ml-2">
               <span className="text-xs text-red-600 font-medium">Delete this board?</span>

@@ -399,14 +399,7 @@ function DraggableCard({ card, allCards, onDelete, editingId, onStartEdit, onSav
       {cardVisual()}
       {!isEditing && (
         <>
-          {card.locked ? (
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20">
-              <div className="px-2 py-0.5 rounded-full text-[10px] font-medium shadow-lg flex items-center gap-1" style={{ background: "var(--green)", color: "#fff" }}>
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                locked
-              </div>
-            </div>
-          ) : (
+          {!card.locked && (
             <div {...listeners} className="absolute -top-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition cursor-grab active:cursor-grabbing z-20">
               <div className="px-3 py-0.5 rounded-full text-[10px] font-medium shadow-lg" style={{ background: "var(--green)", color: "#fff" }}>drag</div>
             </div>

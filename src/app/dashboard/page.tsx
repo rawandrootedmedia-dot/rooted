@@ -87,25 +87,25 @@ export default function Dashboard() {
           <h2 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: "var(--text-secondary)" }}>
             Upcoming Shoots
           </h2>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {upcomingShoots.map((project) => (
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
-                className="block p-4 rounded-xl transition"
+                className="block p-3 rounded-lg transition"
                 style={{ border: "1px solid var(--border)", background: "var(--card-bg)" }}
               >
                 <div className="flex items-start justify-between">
-                  <div>
-                    <p className="font-medium" style={{ color: "var(--text-primary)" }}>{project.title}</p>
-                    <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>{project.client.name}</p>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate" style={{ color: "var(--text-primary)" }}>{project.title}</p>
+                    <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>{project.client.name}</p>
                   </div>
-                  <span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: statusColors[project.status] || "var(--bg-secondary)", color: statusTextColors[project.status] || "var(--text-secondary)" }}>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium shrink-0 ml-2" style={{ background: statusColors[project.status] || "var(--bg-secondary)", color: statusTextColors[project.status] || "var(--text-secondary)" }}>
                     {statusLabels[project.status] || project.status}
                   </span>
                 </div>
-                <p className="text-sm mt-2" style={{ color: "var(--green)" }}>
-                  {project.shootDate ? new Date(project.shootDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }) : "Date TBD"}
+                <p className="text-xs mt-1.5" style={{ color: "var(--green)" }}>
+                  {project.shootDate ? new Date(project.shootDate).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }) : "TBD"}
                 </p>
               </Link>
             ))}
@@ -135,25 +135,25 @@ export default function Dashboard() {
             </Link>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {projects.map((project) => (
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
-                className="block p-4 rounded-xl transition group"
+                className="block p-3 rounded-lg transition group"
                 style={{ border: "1px solid var(--border)", background: "var(--card-bg)" }}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <span className="text-xs px-2 py-1 rounded-full font-medium" style={{ background: statusColors[project.status] || "var(--bg-secondary)", color: statusTextColors[project.status] || "var(--text-secondary)" }}>
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: statusColors[project.status] || "var(--bg-secondary)", color: statusTextColors[project.status] || "var(--text-secondary)" }}>
                     {statusLabels[project.status] || project.status}
                   </span>
-                  <span className="text-xs capitalize" style={{ color: "var(--text-secondary)" }}>{project.type}</span>
+                  <span className="text-[10px] capitalize" style={{ color: "var(--text-secondary)" }}>{project.type}</span>
                 </div>
-                <h3 className="font-medium transition" style={{ color: "var(--text-primary)" }}>
+                <h3 className="font-medium text-sm truncate transition" style={{ color: "var(--text-primary)" }}>
                   {project.title}
                 </h3>
-                <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>{project.client.name}</p>
-                <div className="flex gap-3 mt-3 text-xs" style={{ color: "var(--text-secondary)" }}>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-secondary)" }}>{project.client.name}</p>
+                <div className="flex gap-2 mt-2 text-[10px]" style={{ color: "var(--text-secondary)" }}>
                   <span>{project._count.boards} board{project._count.boards !== 1 ? "s" : ""}</span>
                   <span>{project._count.shots} shot{project._count.shots !== 1 ? "s" : ""}</span>
                 </div>

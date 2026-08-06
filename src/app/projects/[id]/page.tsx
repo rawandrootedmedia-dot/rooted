@@ -223,15 +223,15 @@ export default function ProjectDetail() {
             </button>
           </div>
         </div>
-        <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid gap-2 grid-cols-4 sm:grid-cols-5 lg:grid-cols-7">
           {project.boards.map((board) => (
             <div key={board.id} className="relative group">
               <Link
                 href={`/boards/${board.id}`}
-                className="block p-3 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-sage-300 dark:hover:border-charcoal-600 transition min-h-[60px] flex flex-col justify-end"
+                className="block p-2 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-sage-300 dark:hover:border-charcoal-600 transition aspect-square flex flex-col justify-end"
               >
-                <h3 className="font-serif text-xs text-clay-800 dark:text-clay-200 group-hover:text-clay-700 dark:group-hover:text-clay-300 transition truncate">{board.title}</h3>
-                <p className="text-[9px] text-charcoal-400 mt-0.5">{board._count.cards} card{board._count.cards !== 1 ? "s" : ""}</p>
+                <h3 className="font-serif text-[11px] text-clay-800 dark:text-clay-200 group-hover:text-clay-700 dark:group-hover:text-clay-300 transition truncate leading-tight">{board.title}</h3>
+                <p className="text-[8px] text-charcoal-400 mt-0.5">{board._count.cards} card{board._count.cards !== 1 ? "s" : ""}</p>
               </Link>
               <button
                 onClick={async (e) => {
@@ -240,10 +240,10 @@ export default function ProjectDetail() {
                   await fetch(`/api/boards/${board.id}`, { method: "DELETE" });
                   setProject((p) => p ? { ...p, boards: p.boards.filter((b) => b.id !== board.id) } : p);
                 }}
-                className="absolute top-1 right-1 p-1 rounded text-charcoal-300 dark:text-charcoal-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition opacity-0 group-hover:opacity-100"
+                className="absolute top-0.5 right-0.5 p-0.5 rounded text-charcoal-300 dark:text-charcoal-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition opacity-0 group-hover:opacity-100"
                 title="Delete board"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>
             </div>
           ))}

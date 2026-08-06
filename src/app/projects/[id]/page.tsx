@@ -3,6 +3,23 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 type BoardItem = { id: string; title: string; deletedAt: string | null; _count: { cards: number } };
 
@@ -22,6 +39,36 @@ type ProjectData = {
   callSheets: { id: string; date: string; location: string | null }[];
 };
 
+function SortableBoardItem({ board, onDelete }: { board: BoardItem; onDelete: (id: string, title: string) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: board.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 1,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="relative group" {...attributes} {...listeners}>
+      <Link
+        href={`/boards/${board.id}`}
+        className="block p-2 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-sage-300 dark:hover:border-charcoal-600 transition aspect-square flex flex-col justify-end"
+        onClick={(e) => e.preventDefault()}
+      >
+        <h3 className="font-serif text-[11px] text-clay-800 dark:text-clay-200 group-hover:text-clay-700 dark:group-hover:text-clay-300 transition truncate leading-tight">{board.title}</h3>
+        <p className="text-[8px] text-charcoal-400 mt-0.5">{board._count.cards} card{board._count.cards !== 1 ? "s" : ""}</p>
+      </Link>
+      <button
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(board.id, board.title); }}
+        className="absolute top-0.5 right-0.5 p-0.5 rounded text-charcoal-300 dark:text-charcoal-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition opacity-0 group-hover:opacity-100"
+        title="Delete board"
+      >
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+      </button>
+    </div>
+  );
+}
+
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -32,6 +79,32 @@ export default function ProjectDetail() {
   const [showTrash, setShowTrash] = useState(false);
   const [builtInTemplates, setBuiltInTemplates] = useState<TemplateItem[]>([]);
   const [customTemplates, setCustomTemplates] = useState<TemplateItem[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !project) return;
+    const oldIndex = project.boards.findIndex((b) => b.id === active.id);
+    const newIndex = project.boards.findIndex((b) => b.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(project.boards, oldIndex, newIndex);
+    setProject({ ...project, boards: reordered });
+    await fetch("/api/boards/reorder", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderedIds: reordered.map((b) => b.id) }),
+    });
+  }
+
+  function deleteBoard(boardId: string, title: string) {
+    if (!confirm(`Delete board "${title}"? This cannot be undone.`)) return;
+    fetch(`/api/boards/${boardId}`, { method: "DELETE" });
+    setProject((p) => p ? { ...p, boards: p.boards.filter((b) => b.id !== boardId) } : p);
+  }
 
   useEffect(() => {
     fetch("/api/templates").then(r => r.json()).then(d => {
@@ -223,31 +296,15 @@ export default function ProjectDetail() {
             </button>
           </div>
         </div>
-        <div className="grid gap-2 grid-cols-4 sm:grid-cols-5 lg:grid-cols-7">
-          {project.boards.map((board) => (
-            <div key={board.id} className="relative group">
-              <Link
-                href={`/boards/${board.id}`}
-                className="block p-2 rounded-lg border border-sage-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-sage-300 dark:hover:border-charcoal-600 transition aspect-square flex flex-col justify-end"
-              >
-                <h3 className="font-serif text-[11px] text-clay-800 dark:text-clay-200 group-hover:text-clay-700 dark:group-hover:text-clay-300 transition truncate leading-tight">{board.title}</h3>
-                <p className="text-[8px] text-charcoal-400 mt-0.5">{board._count.cards} card{board._count.cards !== 1 ? "s" : ""}</p>
-              </Link>
-              <button
-                onClick={async (e) => {
-                  e.preventDefault();
-                  if (!confirm(`Delete board "${board.title}"? This cannot be undone.`)) return;
-                  await fetch(`/api/boards/${board.id}`, { method: "DELETE" });
-                  setProject((p) => p ? { ...p, boards: p.boards.filter((b) => b.id !== board.id) } : p);
-                }}
-                className="absolute top-0.5 right-0.5 p-0.5 rounded text-charcoal-300 dark:text-charcoal-600 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition opacity-0 group-hover:opacity-100"
-                title="Delete board"
-              >
-                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-              </button>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={project.boards.map((b) => b.id)} strategy={rectSortingStrategy}>
+            <div className="grid gap-2 grid-cols-4 sm:grid-cols-5 lg:grid-cols-7">
+              {project.boards.map((board) => (
+                <SortableBoardItem key={board.id} board={board} onDelete={deleteBoard} />
+              ))}
             </div>
-          ))}
-        </div>
+          </SortableContext>
+        </DndContext>
       </div>
 
       {project.trashedBoards?.length > 0 && (

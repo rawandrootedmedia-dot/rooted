@@ -22,7 +22,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     prisma.board.findMany({
       where: { projectId: project.id, deletedAt: null },
       include: { _count: { select: { cards: true } } },
-      orderBy: { createdAt: "asc" },
+      orderBy: { order: "asc" },
     }),
     prisma.board.findMany({
       where: { projectId: project.id, deletedAt: { not: null } },
